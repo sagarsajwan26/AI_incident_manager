@@ -9,6 +9,8 @@ from app.repository.incident_audit import IncidentAuditRepository
 from app.models.incident_audit import IncidentAuditLog
 from app.repository.incident_comment import IncidentCommentRepository
 from app.models.incident_comment import IncidentComment
+from app.models.incident_evidence import IncidentEvidence
+from app.repository.incident_evidence import IncidentEvidenceRepository
 
 ALLOWED_STATUS_TRANSITIONS = {
     IncidentStatus.OPEN: {
@@ -30,6 +32,7 @@ class IncidentService:
         self.user_repository = UserRepository(db)
         self.audit_repository = IncidentAuditRepository(db)
         self.comment_repository = IncidentCommentRepository(db)
+        self.evidence_repository = IncidentEvidenceRepository(db)
 
     async def create_incident(
         self,
@@ -240,5 +243,129 @@ class IncidentService:
             current_user=current_user,
         )
         return await self.comment_repository.get_by_incident(
+            incident_id=incident.id, tenant_id=current_user.tenant_id
+        )
+
+    async def update_comment(
+        self, incident_id: int, comment_id: int, content: str, current_user: User
+    ) -> IncidentComment:
+        incident = await self.get_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+        comment = await self.comment_repository.get_by_id(
+            comment_id=comment_id,
+            incident_id=incident.id,
+            tenant_id=current_user.tenant_id,
+        )
+
+        if comment is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="comment not found"
+            )
+        if current_user.role == UserRole.INVESTIGATOR:
+            if comment.author_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You can only edit your own comment",
+                )
+        old_content = comment.content
+
+        comment.content = content
+        await self.audit_repository.create(
+            tenant_id=current_user.tenant_id,
+            incident_id=incident.id,
+            performed_by=current_user.id,
+            action="COMMENT_UPDATED",
+            old_value=old_content,
+            new_value=content,
+        )
+
+        await self.db.commit()
+
+        return comment
+
+    async def delete_comment(
+        self, incident_id: int, comment_id: int, current_user: User
+    ) -> None:
+        incident = await self.get_incident(
+            incident_id=incident_id,
+            current_user=current_user,
+        )
+        comment = await self.comment_repository.get_by_id(
+            comment_id=comment_id,
+            incident_id=incident.id,
+            tenant_id=current_user.tenant_id,
+        )
+
+        if comment is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Comment not found",
+            )
+        if current_user.role == UserRole.INVESTIGATOR:
+            if comment.author_id != current_user.id:
+
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="you can only delete your own comments",
+                )
+        deleted_content = comment.content
+
+        await self.db.delete(comment)
+
+        await self.audit_repository.create(
+            tenant_id=current_user.tenant_id,
+            incident_id=incident.id,
+            performed_by=current_user.id,
+            action="COMMENT_DELETED",
+            old_value=deleted_content,
+            new_value=None,
+        )
+        await self.db.commit()
+
+    async def create_evidence(
+        self,
+        incident_id: int,
+        evidence_type: str,
+        content: str,
+        current_user: User,
+    ) -> IncidentEvidence:
+        incident = await self.get_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+
+        if current_user.role not in (UserRole.ADMIN, UserRole.INVESTIGATOR):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="you dont have permission to add evidence",
+            )
+        evidence = await self.evidence_repository.create(
+            incident_id=incident.id,
+            tenant_id=current_user.tenant_id,
+            added_by=current_user.id,
+            evidence_type=evidence_type,
+            content=content,
+        )
+
+        await self.audit_repository.create(
+            tenant_id=current_user.tenant_id,
+            incident_id=incident.id,
+            performed_by=current_user.id,
+            action="EVIDENCE_ADDED",
+            old_value=None,
+            new_value=evidence_type,
+        )
+
+        await self.db.commit()
+
+        return evidence
+
+    async def get_evidence(
+        self, incident_id: int, current_user: User
+    ) -> list[IncidentEvidence]:
+        incident = await self.get_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+        return await self.evidence_repository.get_by_incident(
             incident_id=incident.id, tenant_id=current_user.tenant_id
         )

@@ -19,7 +19,7 @@ class IncidentAuditLog(Base):
     action: Mapped[str] = mapped_column(String(50), nullable=False)
     old_value: Mapped[str | None] = mapped_column(
         Text,
-        nullable=False,
+        nullable=True,
     )
     new_value: Mapped[str | None] = mapped_column(Text, nullable=True)
 

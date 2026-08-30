@@ -18,3 +18,7 @@ class IncidentCommentResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UpdateIncidentCommentRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=5000)

@@ -37,3 +37,27 @@ class IncidentCommentRepository:
             .order_by(IncidentComment.created_at.asc())
         )
         return list(result.scalars().all())
+
+    async def get_by_id(
+        self,
+        comment_id: int,
+        incident_id: int,
+        tenant_id: int,
+    ) -> IncidentComment | None:
+        result = await self.db.execute(
+            select(IncidentComment).where(
+                IncidentComment.id == comment_id,
+                IncidentComment.incident_id == incident_id,
+                IncidentComment.tenant_id == tenant_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def save(
+        self,
+        comment: IncidentComment,
+    ) -> IncidentComment:
+        self.db.add(comment)
+        await self.db.flush()
+        await self.db.refresh(comment)
+        return comment

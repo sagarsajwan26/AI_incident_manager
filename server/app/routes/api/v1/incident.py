@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.incident_comment import (
     IncidentCommentResponse,
     CreateIncidentCommentRequest,
+    UpdateIncidentCommentRequest,
 )
 from app.database.session import get_db
 from app.dependencies.auth import get_current_user
@@ -14,6 +15,10 @@ from app.schemas.incident import (
     AssignIncidentRequest,
     UpdateIncidentStatusRequest,
     IncidentAuditResponse,
+)
+from app.schemas.incident_evidence import (
+    CreateIncidentEvidenceRequest,
+    IncidentEvidenceResponse,
 )
 from app.core.authorization import require_role
 
@@ -131,4 +136,73 @@ async def create_incident_comment(
     service = IncidentService(db)
     return await service.create_comment(
         incident_id=incident_id, content=data.content, current_user=current_user
+    )
+
+
+@router.patch(
+    "/{incident_id}/comments/{comment_id}", response_model=IncidentCommentResponse
+)
+async def update_incident_comment(
+    incident_id: int,
+    comment_id: int,
+    data: UpdateIncidentCommentRequest,
+    current_user: User = Depends(require_role("admin", "investigator")),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+    return await service.update_comment(
+        incident_id=incident_id,
+        comment_id=comment_id,
+        content=data.content,
+        current_user=current_user,
+    )
+
+
+@router.delete("/{incident_id}/comments/{comment_id}", status_code=204)
+async def delete_incident_comment(
+    incident_id: int,
+    comment_id: int,
+    current_user: User = Depends(require_role("admin", "investigator")),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+    await service.delete_comment(
+        incident_id=incident_id, comment_id=comment_id, current_user=current_user
+    )
+
+    return None
+
+
+@router.post(
+    "/{incident_id}/evidence",
+    response_model=IncidentEvidenceResponse,
+)
+async def create_incident_evidence(
+    incident_id: int,
+    data: CreateIncidentEvidenceRequest,
+    current_user: User = Depends(require_role("admin", "investigator")),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+
+    return await service.create_evidence(
+        incident_id=incident_id,
+        evidence_type=data.evidence_type,
+        content=data.content,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/{incident_id}/evidence",
+    response_model=list[IncidentEvidenceResponse],
+)
+async def get_incident_evidence(
+    incident_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+    return await service.get_evidence(
+        incident_id=incident_id, current_user=current_user
     )
