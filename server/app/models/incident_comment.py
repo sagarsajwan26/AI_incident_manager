@@ -1,0 +1,38 @@
+from datetime import datetime, timezone
+
+from sqlalchemy import DateTime, ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.models.base import Base
+
+
+class IncidentComment(Base):
+    __tablename__ = "incident_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    incident_id: Mapped[int] = mapped_column(
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    tenant_id: Mapped[int] = mapped_column(
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    author_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
