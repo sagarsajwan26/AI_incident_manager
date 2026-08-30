@@ -1,19 +1,22 @@
 from logging.config import fileConfig
-
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from app.core.config import settings
-from app.models.user import User
-from app.models.base import Base
+from app.models.incident_audit import IncidentAuditLog
 from app.models.incident import Incident
+from app.models.user import User
 from app.models.tenant import Tenant
+from app.models.base import Base
 from alembic import context
+from app.core.config import settings
+from sqlalchemy.engine import Connection
 import asyncio
+from app.models.incident_comment import IncidentComment
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -46,7 +49,7 @@ def run_migrations_offline() -> None:
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=settings.database_url,
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -57,25 +60,21 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-
     context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()
 
 
 async def run_async_migrations() -> None:
-    configuration = config.get_section(
-        config.config_ini_section,
-        {},
-    )
-    configuration["sqlalchemy.url"] = settings.database_url
-
     connectable = async_engine_from_config(
-        configuration, prefix="sqlalchemy.", poolclass=pool.NullPool
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
     )
-
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose()
 
 
 def run_migrations_online() -> None:
