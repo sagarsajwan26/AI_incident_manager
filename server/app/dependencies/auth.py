@@ -3,7 +3,7 @@ from app.database.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import verify_access_token
 from fastapi import HTTPException, Cookie, status, Depends
-from app.repository.auth import UserRepository
+from app.repository.user import UserRepository
 
 
 async def get_current_user(

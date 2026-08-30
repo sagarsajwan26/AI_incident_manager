@@ -45,3 +45,14 @@ class UserRepository:
     async def get_all(self) -> list[User]:
         result = await self.db.execute(select(User))
         return list(result.scalars().all())
+
+    async def get_by_id_and_tenant(
+        self,
+        user_id: int,
+        tenant_id: int,
+    ) -> User | None:
+        result = await self.db.execute(
+            select(User).where(User.id == user_id, User.tenant_id == tenant_id)
+        )
+
+        return result.scalar_one_or_none()

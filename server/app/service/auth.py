@@ -1,4 +1,4 @@
-from app.repository.auth import UserRepository
+from app.repository.user import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 from app.core.security import (
