@@ -11,6 +11,7 @@ from app.core.config import settings
 from sqlalchemy.engine import Connection
 import asyncio
 from app.models.incident_comment import IncidentComment
+from app.models.incident_evidence import IncidentEvidence
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
