@@ -11,6 +11,13 @@ from app.repository.incident_comment import IncidentCommentRepository
 from app.models.incident_comment import IncidentComment
 from app.models.incident_evidence import IncidentEvidence
 from app.repository.incident_evidence import IncidentEvidenceRepository
+from app.schemas.investigation import InvestigationContext
+from app.models.investigation import Investigation
+from app.repository.investigation import InvestigationRepository
+from app.ai.ollama_provider import OllamaProvider
+from app.service.ai_investigation import AIInvestigatorService
+from app.schemas.ai_investigation import InvestigationResult
+from app.core.config import settings
 
 ALLOWED_STATUS_TRANSITIONS = {
     IncidentStatus.OPEN: {
@@ -33,6 +40,7 @@ class IncidentService:
         self.audit_repository = IncidentAuditRepository(db)
         self.comment_repository = IncidentCommentRepository(db)
         self.evidence_repository = IncidentEvidenceRepository(db)
+        self.investigation_repository = InvestigationRepository(db)
 
     async def create_incident(
         self,
@@ -368,4 +376,68 @@ class IncidentService:
         )
         return await self.evidence_repository.get_by_incident(
             incident_id=incident.id, tenant_id=current_user.tenant_id
+        )
+
+    async def get_investigation_context(
+        self,
+        incident_id: int,
+        current_user: User,
+    ) -> InvestigationContext:
+        incident = await self.get_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+        comments = await self.comment_repository.get_by_incident(
+            incident_id=incident.id, tenant_id=current_user.tenant_id
+        )
+        evidence = await self.evidence_repository.get_by_incident(
+            incident_id=incident.id, tenant_id=current_user.tenant_id
+        )
+        audit_history = await self.audit_repository.get_by_incident(
+            incident_id=incident.id, tenant_id=current_user.tenant_id
+        )
+
+        return InvestigationContext(
+            incident=incident,
+            comments=comments,
+            evidence=evidence,
+            audit_history=audit_history,
+        )
+
+    async def investigate_incident(
+        self,
+        incident_id: int,
+        current_user: User,
+    ) -> InvestigationResult:
+        context = await self.get_investigation_context(
+            incident_id=incident_id,
+            current_user=current_user,
+        )
+        provider = OllamaProvider()
+        ai_service = AIInvestigatorService(provider=provider)
+
+        output = await ai_service.investigate(context)
+
+        await self.investigation_repository.create(
+            tenant_id=current_user.tenant_id,
+            incident_id=incident_id,
+            triggered_by=current_user.id,
+            provider="ollama",
+            model=settings.ollama_model,
+            prompt=output.prompt,
+            result=output.result.model_dump(mode="json"),
+            confidence=output.result.confidence,
+        )
+
+        await self.db.commit()
+
+        return output.result
+
+    async def get_investigation_history(
+        self, incident_id: int, current_user: User
+    ) -> list[Investigation]:
+        incident = await self.get_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+        return await self.investigation_repository.get_by_incident(
+            incident_id=incident_id, tenant_id=current_user.tenant_id
         )

@@ -1,8 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.incident_audit import IncidentAuditLog
-from app.database.session import get_db
-from fastapi import Depends
 
 
 class IncidentAuditRepository:

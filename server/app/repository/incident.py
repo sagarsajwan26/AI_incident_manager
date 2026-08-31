@@ -38,12 +38,6 @@ class IncidentRepository:
         )
         return list(result.scalars().all())
 
-    async def save(self, incident: Incident) -> Incident:
-        self.db.add(incident)
-        await self.db.flush()
-        await self.db.refresh(incident)
-        return incident
-
     async def get_by_id_and_tenant(
         self,
         incident_id: int,

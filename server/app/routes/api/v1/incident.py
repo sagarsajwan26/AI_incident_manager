@@ -5,6 +5,7 @@ from app.schemas.incident_comment import (
     CreateIncidentCommentRequest,
     UpdateIncidentCommentRequest,
 )
+from app.schemas.investigation import InvestigationContext
 from app.database.session import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
@@ -21,6 +22,9 @@ from app.schemas.incident_evidence import (
     IncidentEvidenceResponse,
 )
 from app.core.authorization import require_role
+from app.schemas.ai_investigation import InvestigationResult, InvestigationResponse
+from app.service.ai_investigation import AIInvestigatorService
+from app.ai.ollama_provider import OllamaProvider
 
 router = APIRouter()
 
@@ -91,6 +95,7 @@ async def assign_incident(
         incident_id=incident_id,
         investigator_id=data.investigator_id,
         tenant_id=current_user.tenant_id,
+        current_user=current_user,
     )
 
 
@@ -206,3 +211,69 @@ async def get_incident_evidence(
     return await service.get_evidence(
         incident_id=incident_id, current_user=current_user
     )
+
+
+@router.get(
+    "/{incident_id}/investigation-context",
+    response_model=InvestigationContext,
+)
+async def get_investigation_context(
+    incident_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+
+    return await service.get_investigation_context(
+        incident_id=incident_id, current_user=current_user
+    )
+
+
+@router.post("/{incident_id}/investigate", response_model=InvestigationResult)
+async def investigate_incident(
+    incident_id: int,
+    current_user: User = Depends(require_role("admin", "investigator")),
+    db: AsyncSession = Depends(get_db),
+):
+    incident_service = IncidentService(db)
+
+    context = await incident_service.get_investigation_context(
+        incident_id=incident_id,
+        current_user=current_user,
+    )
+
+    provider = OllamaProvider()
+    ai_service = AIInvestigatorService(provider=provider)
+
+    return await ai_service.investigate(context)
+
+
+@router.get(
+    "/{incident_id}/investigations",
+    response_model=list[InvestigationResponse],
+)
+async def get_investigation_history(
+    incident_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+
+    investigations = await service.get_investigation_history(
+        incident_id=incident_id, current_user=current_user
+    )
+
+    return [
+        InvestigationResponse(
+            id=item.id,
+            tenant_id=item.tenant_id,
+            incident_id=item.incident_id,
+            triggered_by=item.triggered_by,
+            provider=item.provider,
+            model=item.model,
+            result=InvestigationResult.model_validate(item.result),
+            confidence=item.confidence,
+            created_at=item.created_at,
+        )
+        for item in investigations
+    ]
