@@ -14,10 +14,11 @@ from app.repository.incident_evidence import IncidentEvidenceRepository
 from app.schemas.investigation import InvestigationContext
 from app.models.investigation import Investigation
 from app.repository.investigation import InvestigationRepository
-from app.ai.ollama_provider import OllamaProvider
-from app.service.ai_investigation import AIInvestigatorService
-from app.schemas.ai_investigation import InvestigationResult
+from app.schemas.ai_investigation import InvestigationResult, InvestigationResponse
 from app.core.config import settings
+from app.service.ai_investigation import AIInvestigatorService
+from app.integration.github.client import GithubClient
+from app.integration.github.provider import GithubProvider
 
 ALLOWED_STATUS_TRANSITIONS = {
     IncidentStatus.OPEN: {
@@ -33,8 +34,11 @@ ALLOWED_STATUS_TRANSITIONS = {
 
 
 class IncidentService:
-    def __init__(self, db: AsyncSession):
+    def __init__(
+        self, db: AsyncSession, ai_service: AIInvestigatorService | None = None
+    ):
         self.db = db
+        self.ai_service = ai_service
         self.incident_repository = IncidentRepository(db)
         self.user_repository = UserRepository(db)
         self.audit_repository = IncidentAuditRepository(db)
@@ -353,6 +357,8 @@ class IncidentService:
             added_by=current_user.id,
             evidence_type=evidence_type,
             content=content,
+            source="manual",
+            external_id=None,
         )
 
         await self.audit_repository.create(
@@ -408,14 +414,16 @@ class IncidentService:
         incident_id: int,
         current_user: User,
     ) -> InvestigationResult:
+
         context = await self.get_investigation_context(
             incident_id=incident_id,
             current_user=current_user,
         )
-        provider = OllamaProvider()
-        ai_service = AIInvestigatorService(provider=provider)
 
-        output = await ai_service.investigate(context)
+        if self.ai_service is None:
+            raise RuntimeError("Ai investigation service is not configured")
+
+        output = await self.ai_service.investigate(context)
 
         await self.investigation_repository.create(
             tenant_id=current_user.tenant_id,
@@ -434,10 +442,68 @@ class IncidentService:
 
     async def get_investigation_history(
         self, incident_id: int, current_user: User
-    ) -> list[Investigation]:
+    ) -> list[InvestigationResponse]:
         incident = await self.get_incident(
             incident_id=incident_id, current_user=current_user
         )
         return await self.investigation_repository.get_by_incident(
-            incident_id=incident_id, tenant_id=current_user.tenant_id
+            incident_id=incident.id, tenant_id=current_user.tenant_id
         )
+
+    async def collect_github_evidence(
+        self, incident_id: int, owner: str, repo: str, per_page: int, current_user: User
+    ) -> list[IncidentEvidence]:
+        incident = await self.get_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+        if current_user.role not in (UserRole.ADMIN, UserRole.INVESTIGATOR):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="you dont have permission to collect evidence",
+            )
+        if not settings.github_token:
+            raise RuntimeError("github token is not configured")
+
+        client = GithubClient(settings.github_token)
+        provider = GithubProvider(client)
+
+        commits = await provider.collect_commits(owner=owner, repo=repo)
+
+        created_evidence = []
+
+        for commit in commits:
+            existing = await self.evidence_repository.get_by_external_id(
+                incident_id=incident.id,
+                tenant_id=current_user.tenant_id,
+                source="github",
+                external_id=commit["sha"],
+                evidence_typ="commit",
+                content=...,
+            )
+            if existing:
+                continue
+            evidence = await self.evidence_repository.create(
+                incident_id=incident.id,
+                tenant_id=current_user.tenant_id,
+                added_by=current_user.id,
+                source="github",
+                external_id=commit["sha"],
+                content=(
+                    f"commit :{commit['message']}\n"
+                    f"Author :{commit['author']}\n"
+                    f"URL: {commit['url']}"
+                ),
+            )
+            created_evidence.append(evidence)
+
+            await self.audit_repository.create(
+                tenant_id=current_user.tenant_id,
+                incident_id=incident.id,
+                performed_by=current_user.id,
+                action="EVIDENCE_ADDED",
+                old_value=None,
+                new_value=f"github commit {commit['sha']}",
+            )
+
+        await self.db.commit()
+        return created_evidence

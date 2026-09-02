@@ -1,11 +1,16 @@
 from datetime import datetime, timezone
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
 
 class IncidentEvidence(Base):
     __tablename__ = "incident_evidence"
+    __table_args__ = (
+        UniqueConstraint(
+            "incident_id", "source", "external_id", name="uq_incident_evidence_external"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     incident_id: Mapped[int] = mapped_column(
@@ -16,8 +21,14 @@ class IncidentEvidence(Base):
     )
     added_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
+    source: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
+
     evidence_type: Mapped[str] = mapped_column(String(50), nullable=False)
 
+    external_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
