@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from app.models.user import UserRole
 
@@ -16,4 +16,4 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     role: UserRole
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
