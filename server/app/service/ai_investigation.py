@@ -9,37 +9,50 @@ from app.ai.investigation_validator import InvestigationValidator
 
 class AIInvestigatorService:
 
-    def __init__(self, provider: LLMProvider):
+    def __init__(self, provider: LLMProvider, provider_name: str, model_name: str):
 
         self.provider = provider
         self.prompt_builder = InvestigationPromptBuilder()
+        self.provider_name = provider_name
+        self.model_name = model_name
         self.validator = InvestigationValidator()
 
     async def investigate(
         self,
         context: InvestigationContext,
-    ) -> InvestigationResult:
+    ) -> AIInvestigationOutput:
 
         prompt = self.prompt_builder.build(context)
         raw_response = await self.provider.generate(prompt)
 
         try:
             data = json.loads(raw_response)
-
         except json.JSONDecodeError as exc:
-            raise RuntimeError("LLM returned invalid JSON") from exc
-        # Conservative fallback when the model omits the
-        # root cause classification.
-        if "root_cause_status" not in data:
-            data["root_cause_status"] = "unknown"
-
-        if "unknowns" not in data:
-            data["unknowns"] = ["The model did not provide explicit unknowns."]
+            raise RuntimeError("AI provider returned invalid json") from exc
 
         try:
             result = InvestigationResult.model_validate(data)
+
         except ValidationError as exc:
-            raise RuntimeError(
-                f"LLM response does not match InvestigationResult scheme:{exc}"
-            ) from exc
-        return self.validator.validate(result)
+            raise RuntimeError(f"AI response failed schema validation:{exc }") from exc
+
+        result = self.validator.validate(result)
+
+        return AIInvestigationOutput(prompt=prompt, result=result)
+        # return InvestigationResult(
+        #     summary=(
+        #         f"Incident '{context.incident.title}' "
+        #         f"is currently {context.incident.status.value}."
+        #     ),
+        #     likely_root_cause=(
+        #         "Insufficient evidence for a reliable root-cause determination."
+        #     ),
+        #     evidence=[item.content for item in context.evidence],
+        #     impact=context.incident.description,
+        #     recommended_actions=[
+        #         "Review available evidence.",
+        #         "Inspect related application and infrastructure logs.",
+        #         "Review recent changes before the incident.",
+        #     ],
+        #     confidence=0.2,
+        # )

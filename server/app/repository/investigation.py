@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.investigation import Investigation
+from app.models.user import User
 
 
 class InvestigationRepository:
@@ -19,6 +20,7 @@ class InvestigationRepository:
         result: dict,
         confidence: float,
     ) -> Investigation:
+
         investigation = Investigation(
             tenant_id=tenant_id,
             incident_id=incident_id,

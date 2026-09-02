@@ -7,10 +7,10 @@ class Settings(BaseSettings):
     refresh_token: str
     access_token_expire_minutes: int
     refresh_token_expire_days: int
+    github_token: str | None = None
 
-    ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "qwen2.5:3b"
-
+    ollama_base_url: str
+    ollama_model: str
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
