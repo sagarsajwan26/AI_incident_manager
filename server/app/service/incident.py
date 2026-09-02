@@ -1,6 +1,6 @@
+import json
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.incident import Incident, IncidentSeverity, IncidentStatus
 from app.repository.incident import IncidentRepository
 from app.repository.user import UserRepository
@@ -429,8 +429,8 @@ class IncidentService:
             tenant_id=current_user.tenant_id,
             incident_id=incident_id,
             triggered_by=current_user.id,
-            provider="ollama",
-            model=settings.ollama_model,
+            provider=self.ai_service.provider_name,
+            model=self.ai_service.model_name,
             prompt=output.prompt,
             result=output.result.model_dump(mode="json"),
             confidence=output.result.confidence,
@@ -467,7 +467,9 @@ class IncidentService:
         client = GithubClient(settings.github_token)
         provider = GithubProvider(client)
 
-        commits = await provider.collect_commits(owner=owner, repo=repo)
+        commits = await provider.collect_commits(
+            owner=owner, repo=repo, per_page=per_page
+        )
 
         created_evidence = []
 
@@ -477,8 +479,6 @@ class IncidentService:
                 tenant_id=current_user.tenant_id,
                 source="github",
                 external_id=commit["sha"],
-                evidence_typ="commit",
-                content=...,
             )
             if existing:
                 continue
@@ -488,10 +488,21 @@ class IncidentService:
                 added_by=current_user.id,
                 source="github",
                 external_id=commit["sha"],
-                content=(
-                    f"commit :{commit['message']}\n"
-                    f"Author :{commit['author']}\n"
-                    f"URL: {commit['url']}"
+                evidence_type="commit",
+                content=json.dumps(
+                    {
+                        "source": "github",
+                        "type": "commit",
+                        "repository": commit["repository"],
+                        "sha": commit["sha"],
+                        "message": commit["message"],
+                        "author": commit["author"],
+                        "timestamp": commit["timestamp"],
+                        "url": commit["url"],
+                        "stats": commit["stats"],
+                        "changed_files": commit["changed_files"],
+                    },
+                    indent=2,
                 ),
             )
             created_evidence.append(evidence)
