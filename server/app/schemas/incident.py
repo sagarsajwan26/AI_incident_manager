@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.models.incident import IncidentSeverity, IncidentStatus
 
 
@@ -21,7 +21,7 @@ class IncidentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignIncidentRequest(BaseModel):
@@ -40,4 +40,4 @@ class IncidentAuditResponse(BaseModel):
     old_value: str | None
     new_value: str | None
     created_at: datetime
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)

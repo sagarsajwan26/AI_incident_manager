@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 from app.models.user import UserRole
 
@@ -56,7 +56,7 @@ class RegisterResponse(BaseModel):
     email: EmailStr
     role: UserRole
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LoginRequest(BaseModel):
