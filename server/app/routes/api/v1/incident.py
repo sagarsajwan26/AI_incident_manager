@@ -25,6 +25,8 @@ from app.core.authorization import require_role
 from app.schemas.ai_investigation import InvestigationResult, InvestigationResponse
 from app.service.ai_investigation import AIInvestigatorService
 from app.ai.ollama_provider import OllamaProvider
+from app.core.config import settings
+from app.schemas.incident_evidence import GithubEvidenceRequest
 
 router = APIRouter()
 
@@ -235,17 +237,16 @@ async def investigate_incident(
     current_user: User = Depends(require_role("admin", "investigator")),
     db: AsyncSession = Depends(get_db),
 ):
-    incident_service = IncidentService(db)
-
-    context = await incident_service.get_investigation_context(
-        incident_id=incident_id,
-        current_user=current_user,
-    )
 
     provider = OllamaProvider()
-    ai_service = AIInvestigatorService(provider=provider)
+    ai_service = AIInvestigatorService(
+        provider=provider, provider_name="ollama", model_name=settings.ollama_model
+    )
+    incident_service = IncidentService(db=db, ai_service=ai_service)
 
-    return await ai_service.investigate(context)
+    return await incident_service.investigate_incident(
+        incident_id=incident_id, current_user=current_user
+    )
 
 
 @router.get(
@@ -257,23 +258,27 @@ async def get_investigation_history(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    service = IncidentService(db)
+    incident_service = IncidentService(db)
 
-    investigations = await service.get_investigation_history(
+    return await incident_service.get_investigation_history(
         incident_id=incident_id, current_user=current_user
     )
 
-    return [
-        InvestigationResponse(
-            id=item.id,
-            tenant_id=item.tenant_id,
-            incident_id=item.incident_id,
-            triggered_by=item.triggered_by,
-            provider=item.provider,
-            model=item.model,
-            result=InvestigationResult.model_validate(item.result),
-            confidence=item.confidence,
-            created_at=item.created_at,
-        )
-        for item in investigations
-    ]
+
+@router.post(
+    "/{incident_id}/evidence/github", response_model=list[IncidentEvidenceResponse]
+)
+async def collect_github_evidence(
+    incident_id: int,
+    request: GithubEvidenceRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+    return await service.collect_github_evidence(
+        incident_id=incident_id,
+        owner=request.owner,
+        repo=request.repo,
+        per_page=request.per_page,
+        current_user=current_user,
+    )

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class CreateIncidentEvidenceRequest(BaseModel):
@@ -20,4 +20,10 @@ class IncidentEvidenceResponse(BaseModel):
     content: str
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GithubEvidenceRequest(BaseModel):
+    owner: str = Field(min_length=1, max_length=100)
+    repo: str = Field(min_length=1, max_length=100)
+    per_page: int = Field(default=10, ge=1, le=100)
