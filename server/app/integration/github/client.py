@@ -34,3 +34,31 @@ class GithubClient:
             return data
         except httpx.HTTPError as exc:
             raise RuntimeError(f"Github request failed: {exc}") from exc
+
+    async def get_commit(
+        self,
+        owner: str,
+        repo: str,
+        sha: str,
+    ) -> dict:
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {self.token}",
+            "X-GitHub-Api-Version": self.API_VERSION,
+        }
+        url = f"{self.BASE_URL}/repos/{owner}/{repo}/commits/{sha}"
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url, headers=headers)
+
+            response.raise_for_status()
+
+            data = response.json()
+
+            if not isinstance(data, dict):
+                raise RuntimeError("github returned an unexpected commit response")
+
+            return data
+        except httpx.HTTPError as exc:
+            raise RuntimeError(f"Github commit request failed: {exc}") from exc
