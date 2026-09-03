@@ -62,3 +62,61 @@ class GithubClient:
             return data
         except httpx.HTTPError as exc:
             raise RuntimeError(f"Github commit request failed: {exc}") from exc
+
+    async def list_deployments(
+        self, owner: str, repo: str, per_page: int = 10
+    ) -> list[dict]:
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {self.token}",
+            "X-GitHub-Api-Version": self.API_VERSION,
+        }
+        params = {
+            "per_page": per_page,
+        }
+        url = f"{self.BASE_URL}/repos/{owner}/{repo}/deployments"
+        try:
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url, headers=headers, params=params)
+                response.raise_for_status()
+                data = response.json()
+                if not isinstance(data, list):
+                    raise RuntimeError(
+                        "github returned an unexpected deployments response"
+                    )
+                return data
+        except httpx.HTTPError as exc:
+            raise RuntimeError(f"Github deployment request failed : {exc}") from exc
+
+    async def get_deployment_status(
+        self,
+        owner: str,
+        repo: str,
+        deployment_id: int,
+    ) -> list[dict]:
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {self.token}",
+            "X-GitHub-Api-Version": self.API_VERSION,
+        }
+        url = (
+            f"{self.BASE_URL}/repos/{owner}/{repo}/deployments/{deployment_id}/statuses"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url, headers=headers)
+
+            response.raise_for_status()
+            data = response.json()
+
+            if not isinstance(data, list):
+                raise RuntimeError(
+                    "github returned an unexpected deployment status response"
+                )
+            return data
+        except httpx.HTTPError as exc:
+            raise RuntimeError(
+                f"Github deployment status request failed: {exc}"
+            ) from exc

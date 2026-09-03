@@ -52,3 +52,48 @@ class GithubProvider:
                 }
             )
         return results
+
+    async def collect_deployments(
+        self, owner: str, repo: str, per_page: int = 10
+    ) -> list[dict]:
+        deployments = await self.client.list_deployments(
+            owner=owner, repo=repo, per_page=per_page
+        )
+
+        results = []
+
+        for deployment in deployments:
+            deployment_id = deployment.get("id")
+
+            if not deployment_id:
+                continue
+
+            statuses = await self.client.get_deployment_status(
+                owner=owner,
+                repo=repo,
+                deployment_id=deployment_id,
+            )
+
+            latest_status = statuses[0] if statuses else None
+
+            results.append(
+                {
+                    "deployment_id": deployment_id,
+                    "repository": f"{owner}/{repo}",
+                    "sha": deployment.get("sha"),
+                    "ref": deployment.get("ref"),
+                    "environment": deployment.get("environment"),
+                    "description": deployment.get("description"),
+                    "created_at": deployment.get("created_at"),
+                    "updated_at": deployment.get("updated_at"),
+                    "url": deployment.get("url"),
+                    "status": (latest_status.get("state") if latest_status else None),
+                    "status_description": (
+                        latest_status.get("description") if latest_status else None
+                    ),
+                    "status_created_at": (
+                        latest_status.get("created_at") if latest_status else None
+                    ),
+                }
+            )
+        return results
