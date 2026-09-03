@@ -282,3 +282,24 @@ async def collect_github_evidence(
         per_page=request.per_page,
         current_user=current_user,
     )
+
+
+@router.post(
+    "/{incident_id}/evidence/github/deployments",
+    response_model=list[IncidentEvidenceResponse],
+)
+async def collect_github_deployment_evidence(
+    incident_id: int,
+    request: GithubEvidenceRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+
+    return await service.collect_github_deployment_evidence(
+        incident_id=incident_id,
+        owner=request.owner,
+        repo=request.repo,
+        per_page=request.per_page,
+        current_user=current_user,
+    )
