@@ -19,6 +19,7 @@ from app.core.config import settings
 from app.service.ai_investigation import AIInvestigatorService
 from app.integration.github.client import GithubClient
 from app.integration.github.provider import GithubProvider
+from app.ai.evidence_relationship_analyzer import EvidenceRelationshipAnalyzer
 
 ALLOWED_STATUS_TRANSITIONS = {
     IncidentStatus.OPEN: {
@@ -389,6 +390,7 @@ class IncidentService:
         incident_id: int,
         current_user: User,
     ) -> InvestigationContext:
+
         incident = await self.get_incident(
             incident_id=incident_id, current_user=current_user
         )
@@ -398,15 +400,24 @@ class IncidentService:
         evidence = await self.evidence_repository.get_by_incident(
             incident_id=incident.id, tenant_id=current_user.tenant_id
         )
+        print("INVESTIGATION EVIDENCE:")
+        for item in evidence:
+            print(item.evidence_type, item.external_id, item.content)
         audit_history = await self.audit_repository.get_by_incident(
             incident_id=incident.id, tenant_id=current_user.tenant_id
         )
+        relationship_analyzer = EvidenceRelationshipAnalyzer()
+        evidence_relationships = relationship_analyzer.analyze(evidence)
+        print("EVIDENCE RELATIONSHIPS:")
 
+        for relationship in evidence_relationships:
+            print(relationship.model_dump())
         return InvestigationContext(
             incident=incident,
             comments=comments,
             evidence=evidence,
             audit_history=audit_history,
+            evidence_relationships=evidence_relationships,
         )
 
     async def investigate_incident(
@@ -514,6 +525,85 @@ class IncidentService:
                 action="EVIDENCE_ADDED",
                 old_value=None,
                 new_value=f"github commit {commit['sha']}",
+            )
+
+        await self.db.commit()
+        return created_evidence
+
+    async def collect_github_deployment_evidence(
+        self, incident_id: int, owner: str, repo: str, per_page: int, current_user: User
+    ) -> list[IncidentEvidence]:
+        incident = await self.get_incident(
+            incident_id=incident_id,
+            current_user=current_user,
+        )
+        if current_user.role not in (UserRole.ADMIN, UserRole.INVESTIGATOR):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="you dont have permission to collect evidence",
+            )
+
+        if not settings.github_token:
+            raise RuntimeError("github token is not configured")
+
+        client = GithubClient(settings.github_token)
+        provider = GithubProvider(client)
+
+        deployments = await provider.collect_deployments(
+            owner=owner, repo=repo, per_page=per_page
+        )
+
+        created_evidence = []
+
+        for deployment in deployments:
+            external_id = f"deployment:{deployment['deployment_id']}"
+
+            existing = await self.evidence_repository.get_by_external_id(
+                incident_id=incident.id,
+                tenant_id=current_user.tenant_id,
+                source="github",
+                external_id=external_id,
+            )
+            if existing:
+                continue
+
+            evidence = await self.evidence_repository.create(
+                incident_id=incident.id,
+                tenant_id=current_user.tenant_id,
+                added_by=current_user.id,
+                source="github",
+                external_id=external_id,
+                evidence_type="deployment",
+                content=json.dumps(
+                    {
+                        "source": "github",
+                        "type": "deployment",
+                        "deployment_id": deployment["deployment_id"],
+                        "sha": deployment["sha"],
+                        "repository": deployment["repository"],
+                        "ref": deployment["ref"],
+                        "environment": deployment["environment"],
+                        "description": deployment["description"],
+                        "created_at": deployment["created_at"],
+                        "updated_at": deployment["updated_at"],
+                        "url": deployment["url"],
+                        "status": deployment["status"],
+                        "status_description": deployment["status_description"],
+                        "status_created_at": deployment["status_created_at"],
+                    },
+                    indent=2,
+                ),
+            )
+
+            created_evidence.append(evidence)
+
+            await self.audit_repository.create(
+                tenant_id=current_user.tenant_id,
+                incident_id=incident.id,
+                performed_by=current_user.id,
+                action="EVIDENCE_ADDED",
+                old_value=None,
+                new_value=(f"github deployment " f"{deployment['deployment_id']}"),
             )
 
         await self.db.commit()
