@@ -84,3 +84,20 @@ async def update_integration(
         )
 
     return integration
+
+
+@router.delete("/{integration_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_integration(
+    integration_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IntegrationService(db)
+
+    success = await service.delete_integration(
+        integration_id=integration_id, tenant_id=current_user.tenant_id
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="missing the integration"
+        )
