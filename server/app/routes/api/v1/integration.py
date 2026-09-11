@@ -4,7 +4,7 @@ from app.dependencies.auth import get_current_user
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_db
 from app.models.user import User
-from app.schemas.integration import IntegrationCreate, IntegrationResponse
+from app.schemas.integration import IntegrationCreate, IntegrationResponse, IntegrationUpdate
 from app.service.integration import IntegrationService
 
 router = APIRouter()
@@ -54,6 +54,29 @@ async def get_integration(
 
     integration = await service.get_integration(
         integration_id=integration_id, tenant_id=current_user.tenant_id
+    )
+    if integration is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="missing the integration"
+        )
+
+    return integration
+
+
+@router.patch("/{integration_id}", response_model=IntegrationResponse)
+async def update_integration(
+    integration_id: int,
+    data: IntegrationUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IntegrationService(db)
+
+    integration = await service.update_integration(
+        integration_id=integration_id,
+        tenant_id=current_user.tenant_id,
+        credentials=data.credentials,
+        is_active=data.is_active,
     )
     if integration is None:
         raise HTTPException(
