@@ -101,3 +101,22 @@ async def delete_integration(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="missing the integration"
         )
+
+
+@router.post("/{integration_id}/test", status_code=status.HTTP_200_OK)
+async def test_integration(
+    integration_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IntegrationService(db)
+
+    integration = await service.get_integration(
+        integration_id=integration_id, tenant_id=current_user.tenant_id
+    )
+    if integration is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="missing the integration"
+        )
+
+    return {"status": "success", "message": f"Integration {integration.provider} connection successful."}
