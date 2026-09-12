@@ -9,7 +9,6 @@ from app.repository.user import UserRepository
 async def get_current_user(
     access_token: str | None = Cookie(default=None), db: AsyncSession = Depends(get_db)
 ) -> User:
-    print(access_token)
     user_repository = UserRepository(db)
     if access_token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="not foun")
