@@ -10,6 +10,10 @@ class Settings(BaseSettings):
 
     ollama_base_url: str
     ollama_model: str
+    
+    openai_api_key: str = "test-key"
+    openai_model: str = "gpt-4"
+    
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

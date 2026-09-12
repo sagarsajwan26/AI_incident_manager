@@ -33,13 +33,13 @@ class AIInvestigatorService:
             print(json.dumps(data, indent=2))
             print("=================================")
         except json.JSONDecodeError as exc:
-            raise AIInvalidResponseError(provider="ai", cause=exc) from exc
+            raise AIInvalidResponseError(provider=self.provider_name, cause=exc) from exc
 
         try:
             result = InvestigationResult.model_validate(data)
 
         except ValidationError as exc:
-            raise AIInvalidResponseError(provider="ai", cause=exc) from exc
+            raise AIInvalidResponseError(provider=self.provider_name, cause=exc) from exc
 
         result = self.validator.validate(result)
 
