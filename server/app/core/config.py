@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     refresh_token: str
     access_token_expire_minutes: int
     refresh_token_expire_days: int
-    github_token: str | None = None
 
     ollama_base_url: str
     ollama_model: str
