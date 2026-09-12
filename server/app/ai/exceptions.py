@@ -1,17 +1,25 @@
-# Exception hierarchy for AI provider errors
+# Exception hierarchy for AI investigation failures
 
-class AIProviderError(Exception):
-    """Base class for AI provider errors.
+class AIInvestigationError(Exception):
+    """Base exception for AI investigation failures.
 
     Attributes:
-        provider (str): Name of the AI provider (e.g., "ollama", "openai").
-        cause (Exception): Original exception that triggered this error.
+        provider (str): Name of the AI provider involved in the investigation.
+        cause (Exception | None): Original exception that triggered the failure.
     """
 
-    def __init__(self, provider: str, cause: Exception):
+    def __init__(self, provider: str, cause: Exception | None = None):
         self.provider = provider
         self.cause = cause
-        super().__init__(f"{provider} provider error: {cause}")
+        if cause:
+            super().__init__(f"{provider} investigation error: {cause}")
+        else:
+            super().__init__(f"{provider} investigation error")
+
+
+class AIProviderError(AIInvestigationError):
+    """Base class for AI provider errors."""
+    pass
 
 
 class AIProviderTimeoutError(AIProviderError):
@@ -24,14 +32,11 @@ class AIProviderUnavailableError(AIProviderError):
     pass
 
 
-class AIInvestigationError(AIProviderError):
-    """Base class for any error occurring during the AI investigation workflow."""
+class AIInvalidResponseError(AIInvestigationError):
+    """Raised when the AI provider returns malformed or invalid output."""
     pass
 
-class AIInvalidResponseError(AIProviderError):
-    """Raised when the AI provider returns malformed or empty JSON response."""
-    pass
 
-class AIConfigurationError(AIProviderError):
-    """Raised when configuration for the AI provider is missing or invalid."""
+class AIConfigurationError(AIInvestigationError):
+    """Raised when AI configuration is missing or invalid."""
     pass
