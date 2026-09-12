@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository.integration_repository import IntegrationRepository
 from app.models.integration import Integration
-
+from app.exception.integration import DuplicateIntegrationError
 
 class IntegrationService:
     def __init__(self, db: AsyncSession):
@@ -10,6 +10,15 @@ class IntegrationService:
     async def create_integration(
         self, tenant_id: int, provider: str, credentials: dict, is_active: bool = True
     ) -> Integration:
+        existing = await self.repository.get_by_provider_and_tenant(
+            provider=provider, tenant_id=tenant_id
+        )
+
+        if existing is not None:
+           raise DuplicateIntegrationError(
+    f"Integration for provider '{provider}' already exists."
+)
+
         return await self.repository.create(
             tenant_id=tenant_id,
             provider=provider,
@@ -53,4 +62,13 @@ class IntegrationService:
     ) -> bool:
         return await self.repository.delete(
             integration_id=integration_id, tenant_id=tenant_id
+        )
+
+    async def get_integration_by_provider(
+        self,
+        provider: str,
+        tenant_id: int,
+    ) -> Integration | None:
+        return await self.repository.get_by_provider_and_tenant(
+            provider=provider, tenant_id=tenant_id
         )

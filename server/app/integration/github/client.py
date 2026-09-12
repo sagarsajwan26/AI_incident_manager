@@ -1,5 +1,14 @@
 import httpx
 
+from app.integration.github.exceptions import (
+    GithubIntegrationError,
+    GithubAuthenticationError,
+    GithubPermissionError,
+    GithubNotFoundError,
+    GithubRateLimitError,
+    GithubUpstreamError,
+    GithubTimeoutError,
+)
 
 class GithubClient:
     BASE_URL = "https://api.github.com"
@@ -7,6 +16,27 @@ class GithubClient:
 
     def __init__(self, token: str):
         self.token = token
+
+    def _handle_request_error(self, exc: Exception):
+        if isinstance(exc, httpx.HTTPStatusError):
+            status = exc.response.status_code
+            if status == 401:
+                raise GithubAuthenticationError(f"GitHub authentication failed: {exc}") from exc
+            elif status == 403:
+                raise GithubPermissionError(f"GitHub permission denied: {exc}") from exc
+            elif status == 404:
+                raise GithubNotFoundError(f"GitHub resource not found: {exc}") from exc
+            elif status == 429:
+                raise GithubRateLimitError(f"GitHub rate limit exceeded: {exc}") from exc
+            elif status >= 500:
+                raise GithubUpstreamError(f"GitHub upstream error: {exc}") from exc
+            else:
+                raise GithubIntegrationError(f"GitHub API error {status}: {exc}") from exc
+        elif isinstance(exc, httpx.TimeoutException):
+            raise GithubTimeoutError(f"GitHub request timed out: {exc}") from exc
+        elif isinstance(exc, httpx.HTTPError):
+            raise GithubIntegrationError(f"GitHub network error: {exc}") from exc
+        raise exc
 
     async def list_commits(
         self, owner: str, repo: str, per_page: int = 10
@@ -29,11 +59,11 @@ class GithubClient:
             data = response.json()
 
             if not isinstance(data, list):
-                raise RuntimeError("github returned an unexpected response")
+                raise GithubIntegrationError("github returned an unexpected response")
 
             return data
         except httpx.HTTPError as exc:
-            raise RuntimeError(f"Github request failed: {exc}") from exc
+            self._handle_request_error(exc)
 
     async def get_commit(
         self,
@@ -57,11 +87,11 @@ class GithubClient:
             data = response.json()
 
             if not isinstance(data, dict):
-                raise RuntimeError("github returned an unexpected commit response")
+                raise GithubIntegrationError("github returned an unexpected commit response")
 
             return data
         except httpx.HTTPError as exc:
-            raise RuntimeError(f"Github commit request failed: {exc}") from exc
+            self._handle_request_error(exc)
 
     async def list_deployments(
         self, owner: str, repo: str, per_page: int = 10
@@ -82,12 +112,12 @@ class GithubClient:
                 response.raise_for_status()
                 data = response.json()
                 if not isinstance(data, list):
-                    raise RuntimeError(
+                    raise GithubIntegrationError(
                         "github returned an unexpected deployments response"
                     )
                 return data
         except httpx.HTTPError as exc:
-            raise RuntimeError(f"Github deployment request failed : {exc}") from exc
+            self._handle_request_error(exc)
 
     async def get_deployment_status(
         self,
@@ -112,11 +142,9 @@ class GithubClient:
             data = response.json()
 
             if not isinstance(data, list):
-                raise RuntimeError(
+                raise GithubIntegrationError(
                     "github returned an unexpected deployment status response"
                 )
             return data
         except httpx.HTTPError as exc:
-            raise RuntimeError(
-                f"Github deployment status request failed: {exc}"
-            ) from exc
+            self._handle_request_error(exc)

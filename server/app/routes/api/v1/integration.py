@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from pydantic import BaseModel
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, require_role
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.integration import IntegrationCreate, IntegrationResponse, IntegrationUpdate
 from app.service.integration import IntegrationService
+from app.exception.integration import DuplicateIntegrationError
 
 router = APIRouter()
 
@@ -15,17 +15,23 @@ router = APIRouter()
 )
 async def create_integration(
     data: IntegrationCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
     db: AsyncSession = Depends(get_db),
 ):
     service = IntegrationService(db)
 
-    integration = await service.create_integration(
-        tenant_id=current_user.tenant_id,
-        provider=data.provider,
-        credentials=data.credentials,
-        is_active=data.is_active,
-    )
+    try:
+        integration = await service.create_integration(
+            tenant_id=current_user.tenant_id,
+            provider=data.provider,
+            credentials=data.credentials,
+            is_active=data.is_active,
+        )
+    except DuplicateIntegrationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
 
     return integration
 
@@ -67,7 +73,7 @@ async def get_integration(
 async def update_integration(
     integration_id: int,
     data: IntegrationUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
     db: AsyncSession = Depends(get_db),
 ):
     service = IntegrationService(db)
@@ -89,7 +95,7 @@ async def update_integration(
 @router.delete("/{integration_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_integration(
     integration_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
     db: AsyncSession = Depends(get_db),
 ):
     service = IntegrationService(db)
