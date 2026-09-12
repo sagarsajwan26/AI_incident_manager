@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,8 +24,13 @@ class IntegrationRepository:
         )
 
         self.db.add(integration)
-        await self.db.commit()
-        await self.db.refresh(integration)
+        
+        try:
+            await self.db.commit()
+            await self.db.refresh(integration)
+        except IntegrityError:
+            await self.db.rollback()
+            raise
 
         return integration
 
