@@ -234,3 +234,95 @@ async def test_provider_failure_propagates():
         await service.investigate(
             create_context()
         )
+
+
+from unittest.mock import AsyncMock
+import httpx
+
+from openai import APITimeoutError, APIConnectionError, InternalServerError
+
+from app.ai.exceptions import (
+    AIProviderTimeoutError,
+    AIProviderUnavailableError,
+)
+from app.ai.ollama_provider import OllamaProvider
+from app.ai.openai_provider import OpenAIProvider
+
+
+def create_mock_response():
+    request = httpx.Request("POST", "http://test")
+    return httpx.Response(status_code=500, request=request)
+
+
+@pytest.mark.asyncio
+async def test_ollama_provider_maps_timeout_to_ai_timeout():
+    provider = OllamaProvider()
+    provider.client.chat.completions.create = AsyncMock(
+        side_effect=APITimeoutError(request=None)
+    )
+
+    with pytest.raises(AIProviderTimeoutError):
+        await provider.generate("test prompt")
+
+
+@pytest.mark.asyncio
+async def test_ollama_provider_maps_connection_error_to_ai_unavailable():
+    provider = OllamaProvider()
+    provider.client.chat.completions.create = AsyncMock(
+        side_effect=APIConnectionError(request=None)
+    )
+
+    with pytest.raises(AIProviderUnavailableError):
+        await provider.generate("test prompt")
+
+
+@pytest.mark.asyncio
+async def test_ollama_provider_maps_internal_server_error_to_ai_unavailable():
+    provider = OllamaProvider()
+    provider.client.chat.completions.create = AsyncMock(
+        side_effect=InternalServerError(
+            message="server error",
+            response=create_mock_response(),
+            body=None,
+        )
+    )
+
+    with pytest.raises(AIProviderUnavailableError):
+        await provider.generate("test prompt")
+
+
+@pytest.mark.asyncio
+async def test_openai_provider_maps_timeout_to_ai_timeout():
+    provider = OpenAIProvider()
+    provider.client.responses.create = AsyncMock(
+        side_effect=APITimeoutError(request=None)
+    )
+
+    with pytest.raises(AIProviderTimeoutError):
+        await provider.generate("test prompt")
+
+
+@pytest.mark.asyncio
+async def test_openai_provider_maps_connection_error_to_ai_unavailable():
+    provider = OpenAIProvider()
+    provider.client.responses.create = AsyncMock(
+        side_effect=APIConnectionError(request=None)
+    )
+
+    with pytest.raises(AIProviderUnavailableError):
+        await provider.generate("test prompt")
+
+
+@pytest.mark.asyncio
+async def test_openai_provider_maps_internal_server_error_to_ai_unavailable():
+    provider = OpenAIProvider()
+    provider.client.responses.create = AsyncMock(
+        side_effect=InternalServerError(
+            message="server error",
+            response=create_mock_response(),
+            body=None,
+        )
+    )
+
+    with pytest.raises(AIProviderUnavailableError):
+        await provider.generate("test prompt")
