@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas.incident import IncidentResponse
 from app.schemas.incident_evidence import IncidentEvidenceResponse
@@ -19,4 +19,4 @@ class InvestigationContext(BaseModel):
     comments: list[IncidentCommentResponse]
     evidence: list[IncidentEvidenceResponse]
     audit_history: list[IncidentAuditResponse]
-    evidence_relationships: list[EvidenceRelationship] = []
+    evidence_relationships: list[EvidenceRelationship] = Field(default_factory=list)

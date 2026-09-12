@@ -1,6 +1,7 @@
 import json
-from fastapi import HTTPException, status
+from fastapi import status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.ai.exceptions import AIInvestigationError, AIConfigurationError
 from app.models.incident import Incident, IncidentSeverity, IncidentStatus
 from app.repository.incident import IncidentRepository
 from app.repository.user import UserRepository
@@ -15,11 +16,13 @@ from app.schemas.investigation import InvestigationContext
 from app.models.investigation import Investigation
 from app.repository.investigation import InvestigationRepository
 from app.schemas.ai_investigation import InvestigationResult, InvestigationResponse
-from app.core.config import settings
 from app.service.ai_investigation import AIInvestigatorService
 from app.integration.github.client import GithubClient
 from app.integration.github.provider import GithubProvider
+from app.integration.github.exceptions import GithubIntegrationError
+from app.exception.integration import IntegrationConnectionError
 from app.ai.evidence_relationship_analyzer import EvidenceRelationshipAnalyzer
+from app.service.integration import IntegrationService
 
 ALLOWED_STATUS_TRANSITIONS = {
     IncidentStatus.OPEN: {
@@ -46,6 +49,7 @@ class IncidentService:
         self.comment_repository = IncidentCommentRepository(db)
         self.evidence_repository = IncidentEvidenceRepository(db)
         self.investigation_repository = InvestigationRepository(db)
+        self.integration_service = IntegrationService(db)
 
     async def create_incident(
         self,
@@ -432,9 +436,17 @@ class IncidentService:
         )
 
         if self.ai_service is None:
-            raise RuntimeError("Ai investigation service is not configured")
+            raise AIConfigurationError(provider="ai", cause=RuntimeError("AI investigation service is not configured"))
 
-        output = await self.ai_service.investigate(context)
+        try:
+            output = await self.ai_service.investigate(context)
+        except AIInvestigationError as exc:
+            # Propagate typed AI investigation errors; API layer will map them
+            raise
+        except Exception as exc:
+            # Unexpected errors become integration errors
+            from app.exception.integration import IntegrationConnectionError
+            raise IntegrationConnectionError(provider="ai", cause=exc) from exc
 
         await self.investigation_repository.create(
             tenant_id=current_user.tenant_id,
@@ -451,6 +463,10 @@ class IncidentService:
 
         return output.result
 
+        await self.db.commit()
+
+        return output.result
+
     async def get_investigation_history(
         self, incident_id: int, current_user: User
     ) -> list[InvestigationResponse]:
@@ -460,6 +476,31 @@ class IncidentService:
         return await self.investigation_repository.get_by_incident(
             incident_id=incident.id, tenant_id=current_user.tenant_id
         )
+
+    async def get_investigation(
+        self,
+        incident_id: int,
+        investigation_id: int,
+        current_user: User,
+    ) -> InvestigationResponse:
+        incident = await self.get_incident(
+            incident_id=incident_id,
+            current_user=current_user,
+        )
+
+        investigation = await self.investigation_repository.get_by_id_and_incident(
+            investigation_id=investigation_id,
+            incident_id=incident.id,
+            tenant_id=current_user.tenant_id,
+        )
+
+        if investigation is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Investigation not found",
+            )
+
+        return InvestigationResponse.model_validate(investigation)
 
     async def collect_github_evidence(
         self, incident_id: int, owner: str, repo: str, per_page: int, current_user: User
@@ -472,15 +513,43 @@ class IncidentService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="you dont have permission to collect evidence",
             )
-        if not settings.github_token:
-            raise RuntimeError("github token is not configured")
+        integration = await self.integration_service.get_integration_by_provider(
+            provider="github",
+            tenant_id=current_user.tenant_id,
+        )
 
-        client = GithubClient(settings.github_token)
+        if integration is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="GitHub integration is not configured",
+            )
+
+        if not integration.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="GitHub integration is inactive",
+            )
+
+        token = integration.credentials.get("token")
+
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="GitHub integration credentials are invalid",
+            )
+
+        client = GithubClient(token)
         provider = GithubProvider(client)
 
-        commits = await provider.collect_commits(
-            owner=owner, repo=repo, per_page=per_page
-        )
+        try:
+            commits = await provider.collect_commits(
+                owner=owner, repo=repo, per_page=per_page
+            )
+        except GithubIntegrationError as exc:
+            raise IntegrationConnectionError(
+                provider="github",
+                cause=exc,
+            ) from exc
 
         created_evidence = []
 
@@ -543,12 +612,30 @@ class IncidentService:
                 detail="you dont have permission to collect evidence",
             )
 
-        if not settings.github_token:
-            raise RuntimeError("github token is not configured")
+        integration = await self.integration_service.get_integration_by_provider(
+            provider="github", tenant_id=current_user.tenant_id
+        )
 
-        client = GithubClient(settings.github_token)
+        if integration is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="github integration is not configured",
+            )
+
+        if not integration.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="GitHub integration is inactive",
+            )
+        token = integration.credentials.get("token")
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="GitHub integration credentials are invalid",
+            )
+
+        client = GithubClient(token)
         provider = GithubProvider(client)
-
         deployments = await provider.collect_deployments(
             owner=owner, repo=repo, per_page=per_page
         )

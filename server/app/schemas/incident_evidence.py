@@ -18,6 +18,8 @@ class IncidentEvidenceResponse(BaseModel):
     added_by: int
     evidence_type: str
     content: str
+    source: str
+    external_id: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

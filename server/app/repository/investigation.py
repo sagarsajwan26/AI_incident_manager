@@ -52,3 +52,19 @@ class InvestigationRepository:
         )
 
         return list(result.scalars().all())
+
+    async def get_by_id_and_incident(
+        self,
+        investigation_id: int,
+        incident_id: int,
+        tenant_id: int,
+    ) -> Investigation | None:
+
+        result = await self.db.execute(
+            select(Investigation).where(
+                Investigation.id == investigation_id,
+                Investigation.incident_id == incident_id,
+                Investigation.tenant_id == tenant_id,
+            )
+        )
+        return result.scalars().first()
