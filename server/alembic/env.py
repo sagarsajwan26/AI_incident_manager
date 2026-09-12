@@ -13,6 +13,7 @@ import asyncio
 from app.models.incident_comment import IncidentComment
 from app.models.incident_evidence import IncidentEvidence
 from app.models.investigation import Investigation
+from app.models.integration import Integration
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
