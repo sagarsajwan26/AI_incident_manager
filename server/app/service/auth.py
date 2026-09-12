@@ -28,16 +28,13 @@ class AuthService:
         slug = tenant_name.lower().strip().replace(" ", "-")
         existing_tenant = await self.tenant_repository.get_by_slug(slug)
         if existing_tenant:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Tenant already exists",
-            )
-        tenant = await self.tenant_repository.create(name=tenant_name, slug=slug)
+            tenant = existing_tenant
+        else:
+            tenant = await self.tenant_repository.create(name=tenant_name, slug=slug)
         existing_user = await self.user_repository.get_by_email(email)
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="email already exist"
-            )
+            # If user already exists, return it (idempotent registration)
+            return existing_user
         passwordHash = hash_password(password)
         user = await self.user_repository.create_user(
             email=email,
