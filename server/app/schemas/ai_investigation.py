@@ -9,11 +9,17 @@ class RootCauseStatus(str, Enum):
     UNKNOWN = "unknown"
 
 
+class EvidenceSupport(str, Enum):
+    DIRECT = "direct"
+    INFERRED = "inferred"
+    UNSUPPORTED = "unsupported"
+
+
 class EvidenceAssessment(BaseModel):
     claim: str
     support: str
-    is_direct: bool
     supports_root_cause: bool
+    support_level: EvidenceSupport
 
 
 class InvestigationResult(BaseModel):
@@ -30,24 +36,63 @@ class InvestigationResult(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "summary": "The incident includes a database timeout, but the supplied evidence does not establish the root cause.",
-                "likely_root_cause": "Insufficient evidence to determine root cause.",
+                "summary": (
+                    "A database connection timeout was recorded. "
+                    "The supplied evidence does not establish the root cause."
+                ),
+                "likely_root_cause": ("Insufficient evidence to determine root cause."),
                 "root_cause_status": "unknown",
                 "evidence": ["ERROR database connection timeout after 30 seconds"],
                 "evidence_assessment": [
                     {
-                        "fact": "A database connection timeout occurred.",
-                        "support": "The supplied evidence explicitly contains the timeout error.",
-                        "is_direct": True,
+                        "claim": "A database connection timeout occurred.",
+                        "support": (
+                            "The manual log explicitly contains "
+                            "the database timeout error."
+                        ),
                         "supports_root_cause": False,
-                    }
+                        "support_level": "direct",
+                    },
+                    {
+                        "claim": (
+                            "The GitHub commit was successfully "
+                            "deployed to Production."
+                        ),
+                        "support": (
+                            "The commit and deployment share the same "
+                            "SHA and repository, and the deployment "
+                            "status is successful."
+                        ),
+                        "supports_root_cause": False,
+                        "support_level": "direct",
+                    },
+                    {
+                        "claim": (
+                            "The production deployment caused " "the database timeout."
+                        ),
+                        "support": (
+                            "The supplied evidence does not establish "
+                            "a causal relationship."
+                        ),
+                        "supports_root_cause": False,
+                        "support_level": "unsupported",
+                    },
                 ],
-                "impact": "The affected system may experience failed requests.",
+                "impact": (
+                    "The supplied evidence does not establish "
+                    "the actual impact of the timeout."
+                ),
                 "recommended_actions": [
-                    "Review application logs and deployment history."
+                    "Review application logs around the incident.",
+                    "Review database connection and infrastructure metrics.",
+                    "Review deployment logs for the affected repository.",
                 ],
-                "unknowns": ["No evidence directly establishes the root cause."],
-                "confidence": 0.4,
+                "unknowns": [
+                    "The supplied evidence does not establish the root cause.",
+                    "The supplied evidence does not establish whether "
+                    "the deployment contributed to the incident.",
+                ],
+                "confidence": 0.35,
             }
         }
     )

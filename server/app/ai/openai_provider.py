@@ -16,7 +16,7 @@ class OpenAIProvider(LLMProvider):
             response_text = response.output_text
 
             if not response_text:
-                raise RuntimeError("OpenAI returned an empy response")
+                raise AIInvalidResponseError(provider="openai", cause=Exception("empty response"))
             return response_text
         except Exception as exc:
-            raise RuntimeError(f"openai request failed: {exc}") from exc
+            raise AIProviderError(provider="openai", cause=exc) from exc

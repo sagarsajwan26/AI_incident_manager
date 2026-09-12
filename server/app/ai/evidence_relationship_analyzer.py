@@ -74,14 +74,6 @@ class EvidenceRelationshipAnalyzer:
         commit: dict,
         deployment: dict,
     ) -> EvidenceRelationship | None:
-        print("SOURCE ID:", source.id)
-        print("SOURCE TYPE:", source.evidence_type)
-
-        print("TARGET ID:", target.id)
-        print("TARGET TYPE:", target.evidence_type)
-
-        print("COMMIT:", commit)
-        print("DEPLOYMENT:", deployment)
 
         commit_sha = commit.get("sha")
         deployment_sha = deployment.get("sha")
@@ -94,18 +86,13 @@ class EvidenceRelationshipAnalyzer:
         print("COMMIT REPOSITORY:", repository)
         print("DEPLOYMENT REPOSITORY:", deployment_repository)
         if not commit_sha or not deployment_sha:
-
-            print("❌ SHA missing")
             return None
 
         if commit_sha != deployment_sha:
-            print("❌ SHA DOES NOT MATCH")
             return None
 
         if repository != deployment_repository:
-            print("❤️‍🔥 Repository does not match")
             return None
-        print("sha + repository match")
         return EvidenceRelationship(
             source_evidence_id=source.id,
             target_evidence_id=target.id,
@@ -119,27 +106,19 @@ class EvidenceRelationshipAnalyzer:
         )
 
     def _parse_content(self, content: str) -> dict:
-        print("\n ===== PARSING CONTENT")
-        print("CONTENT TYPE: ", type(content))
-        print("CONTENT:")
-        print(repr(content))
         try:
             data = json.loads(content)
-            print("PARSED DATA: ", data)
         except (json.JSONDecodeError, TypeError) as e:
-            print("❌ JSON PARSED FAILED", e)
-            
             if isinstance(content, str):
                 import re
+
                 # Try extracting GitHub commit information from plaintext
-                match = re.search(r'https://github\.com/([^/]+/[^/]+)/commit/([a-f0-9]+)', content)
+                match = re.search(
+                    r"https://github\.com/([^/]+/[^/]+)/commit/([a-f0-9]+)", content
+                )
                 if match:
-                    print("✅ Regex fallback extraction successful")
-                    return {
-                        "repository": match.group(1),
-                        "sha": match.group(2)
-                    }
+                    return {"repository": match.group(1), "sha": match.group(2)}
 
             return {}
-        print("PARSE SUCCESSS")
+
         return data if isinstance(data, dict) else {}

@@ -18,9 +18,20 @@ class InvestigationPromptBuilder:
             or "No evidence available"
         )
 
+        relationships = (
+            "\n".join(
+                f"- [{relationship.relationship_type}] "
+                f"Evidence {relationship.source_evidence_id} -> "
+                f"Evidence {relationship.target_evidence_id}: "
+                f"{relationship.reason}"
+                for relationship in context.evidence_relationships
+            )
+            or "No evidence relationships established"
+        )
+
         audit_history = (
             "\n".join(
-                f"- {audit.action}: {audit.old_value} -> {audit.new_value}"
+                f"- {audit.action}: " f"{audit.old_value} -> {audit.new_value}"
                 for audit in context.audit_history
             )
             or "No audit history available"
@@ -81,6 +92,21 @@ EVIDENCE
 
 
 ==================================================
+DETERMINISTIC EVIDENCE RELATIONSHIPS
+==================================================
+
+The following relationships were established by the deterministic
+evidence relationship analyzer.
+
+These relationships are NOT guesses made by the AI.
+
+They are relationships established from matching identifiers or other
+explicit evidence.
+
+{relationships}
+
+
+==================================================
 AUDIT HISTORY
 ==================================================
 
@@ -121,46 +147,59 @@ An evidence relationship is NOT automatically a causal relationship.
 
 
 ==================================================
+NO UNSUPPORTED NEGATIVE CLAIMS
+==================================================
+
+You MUST NOT claim that something did NOT happen merely because the
+supplied evidence does not mention it.
+
+Absence of evidence is NOT evidence that an event did not occur.
+
+Do NOT invent or assume:
+- downtime did not occur
+- a deletion did not occur
+- an application log does not exist
+- a deployment step did not occur
+- a failure did not occur
+- a system was unaffected
+- a user action did not occur
+
+If the evidence does not mention an event, state UNKNOWN rather than
+stating that it did not happen.
+
+
+==================================================
 EVIDENCE ASSESSMENT
 ==================================================
 
-You MUST return an "evidence_assessment" array.
+For each important claim used in the investigation, provide an
+evidence assessment.
 
-Each item MUST contain:
+Each evidence assessment MUST contain exactly these fields:
+- claim
+- support
+- supports_root_cause
+- support_level
 
-"claim":
-The specific fact or claim being evaluated.
+support_level must be one of:
+- DIRECT
+- INFERRED
+- UNSUPPORTED
 
-"support":
-Explain exactly how the supplied evidence supports or fails to support
-that fact or claim.
+DIRECT:
+The supplied evidence explicitly establishes the claim.
 
-"is_direct":
-true only when the supplied evidence directly establishes the claim.
+INFERRED:
+The claim is a reasonable interpretation of the supplied evidence,
+but is not explicitly established.
 
-"is_direct" MUST be false when the statement requires inference,
-assumption, interpretation, or an unsupported causal connection.
+UNSUPPORTED:
+The supplied evidence does not establish the claim.
 
-"supports_root_cause":
-true only when the supplied evidence provides actual support for the
-claim as part of the root-cause explanation.
+supports_root_cause must be true only when the claim meaningfully
+supports the proposed root cause.
 
-If the claim is merely possible, speculative, temporally correlated,
-or unsupported, "supports_root_cause" MUST be false.
-
-A causal claim may have:
-
-"is_direct": false
-
-and:
-
-"supports_root_cause": true
-
-ONLY when the evidence meaningfully supports the causal hypothesis,
-but does not directly establish the complete causal relationship.
-
-If there is no meaningful evidence supporting the causal claim, both
-"is_direct" and "supports_root_cause" MUST be false.
+A fact can be DIRECT while supports_root_cause is false.
 
 
 Example:
@@ -174,7 +213,7 @@ Correct assessment:
 {{
     "claim": "A database connection timeout occurred after 30 seconds.",
     "support": "The database error explicitly reports a connection timeout after 30 seconds.",
-    "is_direct": true,
+    "support_level": "direct",
     "supports_root_cause": false
 }}
 
@@ -186,7 +225,7 @@ Incorrect assessment:
 {{
     "claim": "The database timeout caused the testing to be deleted.",
     "support": "The timeout happened around the same time.",
-    "is_direct": true,
+    "support_level": "direct",
     "supports_root_cause": true
 }}
 
@@ -197,7 +236,7 @@ The correct assessment would be:
 {{
     "claim": "The database timeout caused the testing to be deleted.",
     "support": "No supplied evidence directly establishes that the timeout caused the deletion.",
-    "is_direct": false,
+    "support_level": "unsupported",
     "supports_root_cause": false
 }}
 
@@ -215,31 +254,31 @@ For example:
 
 GitHub commit:
 
-SHA = abc123
+SHA = <EXAMPLE_SHA>
 
 GitHub deployment:
 
-SHA = abc123
+SHA = <EXAMPLE_SHA>
 environment = Production
 status = success
 
-This directly establishes that commit abc123 was associated with a
+This directly establishes that commit <EXAMPLE_SHA> was associated with a
 successful Production deployment.
 
 This does NOT establish that:
 
-commit abc123
-→ caused the incident
+commit <EXAMPLE_SHA>
+-> caused the incident
 
 or:
 
-commit abc123
-→ caused a database timeout
+commit <EXAMPLE_SHA>
+-> caused a database timeout
 
 or:
 
-commit abc123
-→ caused testing deletion
+commit <EXAMPLE_SHA>
+-> caused testing deletion
 
 A directly established evidence relationship is not automatically
 a causal relationship.
@@ -376,11 +415,11 @@ and two GitHub commits.
 
 Suppose one GitHub commit has:
 
-SHA = abc123
+SHA = <EXAMPLE_SHA>
 
 and a deployment record contains:
 
-SHA = abc123
+SHA = <EXAMPLE_SHA>
 environment = Production
 status = success
 
@@ -388,8 +427,8 @@ The evidence establishes:
 
 - a database timeout occurred
 - the GitHub commit exists
-- the commit SHA is abc123
-- a deployment with SHA abc123 exists
+- the commit SHA is <EXAMPLE_SHA>
+- a deployment with SHA <EXAMPLE_SHA> exists
 - the deployment environment is Production
 - the deployment status is success
 - the commit and deployment are directly related by the matching SHA
@@ -447,9 +486,9 @@ evidence establishes the necessary causal chain.
 Do not assume:
 
 commit exists
-→ commit was deployed
-→ deployment reached the affected environment
-→ deployment caused the incident
+-> commit was deployed
+-> deployment reached the affected environment
+-> deployment caused the incident
 
 unless each required step is supported by supplied evidence.
 
@@ -606,27 +645,24 @@ from the severity.
 
 
 --------------------------------------------------
-RECOMMENDED ACTIONS
+RECOMMENDED ACTIONS — EVIDENCE DISCIPLINE
 --------------------------------------------------
 
-Recommended actions may identify what evidence should be collected next,
-but they must not be written as if an unproven event actually occurred.
+Recommended actions must be based on information gaps that actually
+exist in the supplied evidence.
 
-Good:
+Do NOT introduce an event merely because it would be useful to
+investigate.
 
-"Review application logs to determine whether the database timeout
-directly preceded and caused the deletion."
+Recommendations may identify evidence that should be collected, but
+MUST NOT assume that the event being investigated actually occurred.
 
-Good:
+Never introduce deletion, rollback, user action, downtime, data loss,
+deployment failure, testing activity, or database corruption unless
+that event is present in the supplied evidence.
 
-"Review deployment and application logs to determine whether the
-deployed commit was involved in the incident."
-
-Bad:
-
-"Rollback the GitHub commit that caused the incident."
-
-The second statement assumes causality that has not been established.
+If an event is not established by the supplied evidence, recommend
+collecting evidence about it rather than assuming that it happened.
 
 
 --------------------------------------------------
@@ -700,7 +736,7 @@ The JSON MUST contain exactly these fields:
         {{
             "claim": "Database connection timeout occurred after 30 seconds.",
             "support": "This is explicitly present in the incident evidence.",
-            "is_direct": true,
+            "support_level": "direct",
             "supports_root_cause": false
         }}
     ],
@@ -743,7 +779,7 @@ Before returning the JSON:
 
 7. Have I identified important missing evidence in "unknowns"?
 
-8. Does every "is_direct": true assessment have direct support?
+8. Does every "support_level": "direct" assessment have direct support?
 
 9. Does every "supports_root_cause": true assessment have meaningful
 evidence supporting the root-cause claim?
@@ -760,4 +796,98 @@ If a causal relationship is not directly established, you MUST NOT
 return "confirmed".
 
 Return JSON only.
+==================================================
+TEMPORAL AND CAUSALITY RULES
+==================================================
+
+You MUST NOT infer that two events happened at the same time,
+in sequence, or because of each other unless the supplied evidence
+explicitly establishes that relationship.
+
+In particular:
+
+- A deployment relationship does NOT establish when another event occurred.
+- A matching commit SHA does NOT establish causality.
+- Do NOT use words such as "during", "after", "before", "caused",
+  "because of", "as a result of", or "led to" unless the supplied
+  evidence explicitly supports that claim.
+- Do NOT infer temporal ordering from the order in which evidence
+  appears in this prompt.
+- Do NOT infer that an incident event occurred during a deployment
+  simply because both are associated with the same incident.
+- If timestamps are not available, you MUST NOT make temporal claims.
+- If causality is not explicitly established, describe the relationship
+  only as an association.
+
+For example:
+
+INCORRECT:
+"The database timeout occurred during the production deployment."
+
+CORRECT:
+"A database connection timeout occurred, and a GitHub commit was
+associated with a successful Production deployment. The supplied
+evidence does not establish when the timeout occurred relative to
+the deployment."
+
+The deterministic evidence relationships provided above are factual
+relationships only. They must never be converted into causal or
+temporal relationships unless additional evidence explicitly supports
+that conclusion.
+==================================================
+CROSS-FIELD CONSISTENCY
+=======================
+
+The final answer must be consistent with the evidence_assessment.
+
+If a claim is marked:
+
+"support_level": "unsupported"
+
+then that claim MUST NOT appear elsewhere in the response as an
+established fact.
+
+If:
+
+"supports_root_cause": false
+
+then the claim MUST NOT be used as the reason for the root cause.
+
+If the root_cause_status is "confirmed":
+
+there MUST be at least one evidence assessment with:
+
+"support_level": "direct"
+
+and:
+
+"supports_root_cause": true.
+
+If the root_cause_status is "probable":
+
+there MUST be at least one evidence assessment with:
+
+"support_level": "direct"
+OR
+"support_level": "inferred"
+
+and:
+
+"supports_root_cause": true.
+
+If no assessment directly or inferentially supports the root cause:
+
+the root_cause_status MUST be "unknown".
+
+IMPORTANT:
+
+The summary, likely_root_cause, impact, unknowns, and recommended_actions
+must not contradict the evidence_assessment.
+
+Do not introduce a stronger claim in the summary than the evidence
+assessment supports.
+
+Before returning the JSON, verify that every important factual claim
+in the summary and likely_root_cause is supported by the supplied evidence.
+
 """

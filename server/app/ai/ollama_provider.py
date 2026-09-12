@@ -41,10 +41,8 @@ class OllamaProvider(LLMProvider):
             content = response.choices[0].message.content
 
             if not content:
-                raise RuntimeError("ollama returned an empty response")
+                raise AIInvalidResponseError(provider="ollama", cause=Exception("empty response"))
             return content
 
         except Exception as exc:
-            raise RuntimeError(
-                f"Ollama OpenAI- compatible request failed:{exc}"
-            ) from exc
+            raise AIProviderError(provider="ollama", cause=exc) from exc

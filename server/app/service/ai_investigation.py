@@ -1,4 +1,5 @@
 import json
+from app.ai.exceptions import AIInvalidResponseError
 from app.schemas.ai_investigation import InvestigationResult, AIInvestigationOutput
 from app.schemas.investigation import InvestigationContext
 from app.ai.base import LLMProvider
@@ -23,18 +24,22 @@ class AIInvestigatorService:
     ) -> AIInvestigationOutput:
 
         prompt = self.prompt_builder.build(context)
+
         raw_response = await self.provider.generate(prompt)
 
         try:
             data = json.loads(raw_response)
+            print("\n========== AI RAW JSON ===========")
+            print(json.dumps(data, indent=2))
+            print("=================================")
         except json.JSONDecodeError as exc:
-            raise RuntimeError("AI provider returned invalid json") from exc
+            raise AIInvalidResponseError(provider="ai", cause=exc) from exc
 
         try:
             result = InvestigationResult.model_validate(data)
 
         except ValidationError as exc:
-            raise RuntimeError(f"AI response failed schema validation:{exc }") from exc
+            raise AIInvalidResponseError(provider="ai", cause=exc) from exc
 
         result = self.validator.validate(result)
 
