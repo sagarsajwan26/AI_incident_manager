@@ -17,7 +17,11 @@ export const metadata: Metadata = {
   description: "AI-powered incident investigation platform",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"
