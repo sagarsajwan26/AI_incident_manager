@@ -1,12 +1,18 @@
 from fastapi import APIRouter, Depends, Response, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.auth import RegisterRequest, RegisterResponse, LoginRequest, LoginResponse
+from app.schemas.auth import (
+    RegisterRequest,
+    RegisterResponse,
+    LoginRequest,
+    LoginResponse,
+)
 from app.models.user import User
 from app.service.auth import AuthService
 from app.database.session import get_db
 from app.dependencies.auth import get_current_user
 from app.core.authorization import require_role
 from app.core.logger import get_logger
+
 logger = get_logger(__name__)
 
 router = APIRouter()
@@ -75,3 +81,13 @@ async def admin_only(current_user: User = Depends(require_role("admin"))):
         "message": "Welcome admin",
         "user_id": current_user.id,
     }
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite="lax",
+    )
+    return {"message": "Successfully logged out"}
