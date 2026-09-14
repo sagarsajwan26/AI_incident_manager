@@ -1,68 +1,153 @@
-import Link from 'next/link';
+"use client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useLoginMutation } from "../lib/services/api";
+import { useState } from "react";
+import { FormEvent } from "react";
+export default function Login() {
+  const [login, { isLoading }] = useLoginMutation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const router = useRouter();
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage("");
+    try {
+      await login({
+        email: email.trim(),
+        password: password.trim(),
+      }).unwrap();
 
-export default function LoginPage() {
+      router.replace("/dashboard");
+
+      setSuccessMessage("login success");
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      const apiError = error as {
+        data?: {
+          detail?: string;
+        };
+      };
+
+      setErrorMessage(
+        apiError?.data?.detail ||
+          "Unable to create your account. Please try again.",
+      );
+    }
+  }
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white px-4">
-      <div className="max-w-md w-full bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl shadow-2xl transition-transform transform hover:scale-[1.01] duration-300">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-            Welcome Back
-          </h1>
-          <p className="text-gray-300">Sign in to your AI Incident Manager account</p>
-        </div>
+    <main className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4 py-12 text-[var(--foreground)]">
+      <section className="w-full max-w-md">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-8 shadow-sm">
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <div className="mb-4 inline-flex rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs font-medium text-[var(--muted)]">
+              AI Incident Manager
+            </div>
 
-        <form className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2" htmlFor="email">
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/50 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all placeholder-gray-500 text-white"
-              placeholder="you@example.com"
-              required
-            />
+            <h1 className="text-4xl font-extrabold tracking-tight text-[var(--foreground)]">
+              Welcome Back
+            </h1>
+
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Sign in to your workspace to continue.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2" htmlFor="password">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/50 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all placeholder-gray-500 text-white"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          {/* Success */}
+          {successMessage && (
+            <div
+              role="status"
+              className="mb-6 rounded-lg border border-green-500/20 bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-500/10 dark:text-green-300"
+            >
+              {successMessage}
+            </div>
+          )}
 
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" className="rounded border-gray-600 text-blue-500 focus:ring-blue-500/50 bg-gray-900/50 w-4 h-4" />
-              <span className="text-gray-300">Remember me</span>
-            </label>
-            <Link href="#" className="text-blue-400 hover:text-blue-300 transition-colors">
-              Forgot password?
+          {/* Error */}
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 rounded-lg border border-red-500/20 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300"
+            >
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+              >
+                Email Address
+              </label>
+
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+                disabled={isLoading}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+              >
+                Password
+              </label>
+
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                minLength={8}
+                required
+                disabled={isLoading}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLoading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+          {/* Login */}
+          <p className="mt-8 text-center text-sm text-[var(--muted)]">
+            Don't have an account?{" "}
+            <Link
+              href="/signup"
+              className="font-medium text-[var(--accent)] transition hover:opacity-80"
+            >
+              Sign up
             </Link>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
-          >
-            Sign In
-          </button>
-        </form>
-
-        <p className="mt-8 text-center text-sm text-gray-300">
-          Don't have an account?{' '}
-          <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-            Sign up now
-          </Link>
-        </p>
-      </div>
-    </div>
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }
