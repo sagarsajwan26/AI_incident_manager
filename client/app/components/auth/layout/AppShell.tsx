@@ -5,7 +5,7 @@ import { Topbar } from "./Topbar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[var(--background)] text-[var(--foreground)] overflow-hidden">
+    <div className="flex h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-hidden">
       <div className="z-20">
         <Sidebar />
       </div>
