@@ -134,6 +134,7 @@ export const api = createApi({
         method: "POST",
         body,
       }),
+      invalidatesTags: ["Auth"],
     }),
     me: builder.query<MeResponse, void>({
       query: () => ({
