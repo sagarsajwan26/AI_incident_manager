@@ -54,20 +54,20 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4 py-12 text-[var(--foreground)]">
+    <main className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4 py-12 text-gray-900 dark:text-gray-100">
       <section className="w-full max-w-md">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-8 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-8 shadow-sm">
           {/* Header */}
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs font-medium text-[var(--muted)]">
+            <div className="mb-4 inline-flex rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
               AI Incident Manager
             </div>
 
-            <h1 className="text-4xl font-extrabold tracking-tight text-[var(--foreground)]">
+            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
               Create an Account
             </h1>
 
-            <p className="mt-2 text-sm text-[var(--muted)]">
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Create your workspace and start managing incidents.
             </p>
           </div>
@@ -97,7 +97,7 @@ export default function SignupPage() {
             <div>
               <label
                 htmlFor="tenantName"
-                className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+                className="mb-2 block text-sm font-medium text-gray-900 dark:text-gray-100"
               >
                 Organization Name
               </label>
@@ -112,7 +112,7 @@ export default function SignupPage() {
                 autoComplete="organization"
                 required
                 disabled={isLoading}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3 text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-500 dark:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -121,7 +121,7 @@ export default function SignupPage() {
               <div>
                 <label
                   htmlFor="firstName"
-                  className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-gray-100"
                 >
                   First Name
                 </label>
@@ -136,14 +136,14 @@ export default function SignupPage() {
                   autoComplete="given-name"
                   required
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3 text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-500 dark:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="lastName"
-                  className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-gray-100"
                 >
                   Last Name
                 </label>
@@ -158,7 +158,7 @@ export default function SignupPage() {
                   autoComplete="family-name"
                   required
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3 text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-500 dark:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function SignupPage() {
             <div>
               <label
                 htmlFor="email"
-                className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+                className="mb-2 block text-sm font-medium text-gray-900 dark:text-gray-100"
               >
                 Email Address
               </label>
@@ -182,7 +182,7 @@ export default function SignupPage() {
                 autoComplete="email"
                 required
                 disabled={isLoading}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3 text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-500 dark:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -190,7 +190,7 @@ export default function SignupPage() {
             <div>
               <label
                 htmlFor="password"
-                className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+                className="mb-2 block text-sm font-medium text-gray-900 dark:text-gray-100"
               >
                 Password
               </label>
@@ -206,7 +206,7 @@ export default function SignupPage() {
                 minLength={8}
                 required
                 disabled={isLoading}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3 text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-500 dark:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -214,18 +214,18 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-blue-600 dark:bg-blue-500 px-4 py-3 font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
 
           {/* Login */}
-          <p className="mt-8 text-center text-sm text-[var(--muted)]">
+          <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-medium text-[var(--accent)] transition hover:opacity-80"
+              className="font-medium text-blue-600 dark:text-blue-400 transition hover:opacity-80"
             >
               Sign in
             </Link>
