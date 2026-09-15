@@ -13,14 +13,14 @@ export default function IncidentPage() {
   if (isLoading) {
     return (
       <section className="relative z-10 animate-fade-in-up">
-        <h1 className="text-3xl font-extrabold text-[var(--foreground)] tracking-tight">
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
           Incidents
         </h1>
 
-        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-8 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-8 shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm font-medium text-[var(--muted)]">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Loading incidents...
             </p>
           </div>
@@ -32,7 +32,7 @@ export default function IncidentPage() {
   if (isError) {
     return (
       <section className="relative z-10 animate-fade-in-up">
-        <h1 className="text-3xl font-extrabold text-[var(--foreground)] tracking-tight">
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
           Incidents
         </h1>
 
@@ -81,20 +81,20 @@ export default function IncidentPage() {
       <section className="relative z-10 animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-extrabold text-[var(--foreground)] tracking-tight">
+            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
               Incidents
             </h1>
 
-            <p className="mt-2 text-sm font-medium text-[var(--muted)]">
+            <p className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Track and investigate production incidents.
             </p>
           </div>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-16 text-center shadow-sm flex flex-col items-center justify-center">
-          <div className="w-20 h-20 rounded-full bg-black/5 dark:bg-white/5 border border-[var(--border)] flex items-center justify-center mb-6 shadow-sm">
+        <div className="mt-8 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-16 text-center shadow-sm flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-full bg-black/5 dark:bg-white/5 border border-gray-200 dark:border-gray-800 flex items-center justify-center mb-6 shadow-sm">
             <svg
-              className="w-10 h-10 text-[var(--muted)]"
+              className="w-10 h-10 text-gray-500 dark:text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -108,8 +108,8 @@ export default function IncidentPage() {
               ></path>
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-[var(--foreground)]">No incidents yet</h2>
-          <p className="mt-2 text-[var(--muted)] max-w-sm mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">No incidents yet</h2>
+          <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
             There are currently no incidents available for your account. When
             they arrive, they&apos;ll show up here.
           </p>
@@ -122,37 +122,37 @@ export default function IncidentPage() {
     <section className="relative z-10 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--foreground)]">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
             Incidents
           </h1>
-          <p className="mt-2 text-sm font-medium text-[var(--muted)]">
+          <p className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">
             Track and investigate production incidents.
           </p>
         </div>
 
-        <button className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 active:scale-95">
+        <button className="rounded-full bg-blue-600 dark:bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 active:scale-95">
           + New Incident
         </button>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-sm">
+      <div className="mt-8 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left border-collapse">
-            <thead className="bg-black/5 dark:bg-white/5 border-b border-[var(--border)]">
+            <thead className="bg-black/5 dark:bg-white/5 border-b border-gray-200 dark:border-gray-800">
               <tr>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Title
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Severity
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Status
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Assigned To
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Created
                 </th>
               </tr>
@@ -167,11 +167,11 @@ export default function IncidentPage() {
                   <td className="px-6 py-4">
                     <Link
                       href={`/incidents/${incident.id}`}
-                      className="font-semibold text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors duration-200"
+                      className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:text-blue-400 transition-colors duration-200"
                     >
                       {incident.title}
                     </Link>
-                    <div className="mt-1 max-w-md truncate text-sm text-[var(--muted)]">
+                    <div className="mt-1 max-w-md truncate text-sm text-gray-500 dark:text-gray-400">
                       {incident.description}
                     </div>
                   </td>
@@ -207,7 +207,7 @@ export default function IncidentPage() {
                         incident.status === "resolved" ||
                         incident.status === "closed"
                           ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20"
-                          : "bg-black/5 text-[var(--muted)] border-[var(--border)] dark:bg-white/5"
+                          : "bg-black/5 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 dark:bg-white/5"
                       }`}
                     >
                       {incident.status}
@@ -217,19 +217,19 @@ export default function IncidentPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="h-6 w-6 rounded-full bg-[var(--border)] flex items-center justify-center">
-                        <span className="text-[10px] font-semibold text-[var(--foreground)]">
+                        <span className="text-[10px] font-semibold text-gray-900 dark:text-gray-100">
                           {incident.assigned_to
                             ? `#${incident.assigned_to}`
                             : "?"}
                         </span>
                       </div>
-                      <span className="text-sm text-[var(--foreground)]">
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
                         {incident.assigned_to ?? "Unassigned"}
                       </span>
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 text-sm text-[var(--muted)]">
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     {new Date(incident.created_at).toLocaleDateString(
                       undefined,
                       {
