@@ -95,13 +95,30 @@ type UpdateCommentRequest = {
   commentId: number;
   content: string;
 };
+
+export type IncidentAudit = {
+  id: number;
+  incident_id: number;
+  tenant_id: number;
+  user_id: number;
+  action: string;
+  details: string | null;
+  created_at: string;
+};
 export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_URL,
     credentials: "include",
   }),
-  tagTypes: ["Auth", "InvestigationHistory", "Evidence", "Incident", "Comment"],
+  tagTypes: [
+    "Auth",
+    "InvestigationHistory",
+    "Evidence",
+    "Incident",
+    "Comment",
+    "Audit",
+  ],
   endpoints: (builder) => ({
     register: builder.mutation<RegisterResponse, RegisterRequest>({
       query: (body) => ({
@@ -242,6 +259,13 @@ export const api = createApi({
         { type: "Comment", id: incidentId },
       ],
     }),
+
+    getIncidentAudit: builder.query<IncidentAudit[], number>({
+      query: (incidentId) => `/api/v1/incidents/${incidentId}/audit`,
+      providesTags: (_result, _error, incidentId) => [
+        { type: "Audit", id: incidentId },
+      ],
+    }),
   }),
 });
 
@@ -261,4 +285,5 @@ export const {
   useGetIncidentCommentsQuery,
   useAddIncidentCommentMutation,
   useUpdateIncidentCommentMutation,
+  useGetIncidentAuditQuery,
 } = api;
