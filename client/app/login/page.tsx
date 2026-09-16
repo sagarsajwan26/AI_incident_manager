@@ -40,12 +40,16 @@ export default function Login() {
     }
   }
   return (
-    <main className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4 py-12 text-gray-900 dark:text-gray-100">
-      <section className="w-full max-w-md">
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-8 shadow-sm">
+    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-50 dark:from-blue-900/20 via-white dark:via-gray-950 to-white dark:to-gray-950 px-4 py-12 flex items-center justify-center">
+      {/* Animated glowing background elements */}
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 dark:opacity-10 animate-blob"></div>
+      <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 dark:opacity-10 animate-blob animation-delay-2000"></div>
+
+      <section className="relative z-10 w-full max-w-md">
+        <div className="rounded-2xl border border-white/20 dark:border-white/10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-8 shadow-xl">
           {/* Header */}
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+            <div className="mb-4 inline-flex rounded-full border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-950/50 backdrop-blur-md px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
               AI Incident Manager
             </div>
 
@@ -130,7 +134,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-blue-600 dark:bg-blue-500 px-4 py-3 font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-blue-600 dark:bg-blue-500 px-4 py-3 font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-700 hover:-translate-y-0.5 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
