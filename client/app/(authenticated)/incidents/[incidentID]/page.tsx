@@ -40,8 +40,10 @@ export default function IncidentDetailPage() {
     }
   };
 
-  const [updateIncidentStatus, { isLoading: isUpdatingStatus }] =
-    useUpdateIncidentStatusMutation();
+  const [
+    updateIncidentStatus,
+    { isLoading: isUpdatingStatus, isError: isStatusError, error: statusError },
+  ] = useUpdateIncidentStatusMutation();
 
   const handleStatusChange = async (newStatus: Incident["status"]) => {
     try {
@@ -104,11 +106,26 @@ export default function IncidentDetailPage() {
         </div>
       )}
 
+      {isStatusError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/20 dark:bg-red-500/10">
+          <p className="text-sm font-medium text-red-600 dark:text-red-400">
+            {typeof statusError === "object" &&
+            statusError !== null &&
+            "data" in statusError &&
+            typeof statusError.data === "object" &&
+            statusError.data !== null &&
+            "detail" in statusError.data &&
+            typeof statusError.data.detail === "string"
+              ? statusError.data.detail
+              : "Failed to update incident status. Please try again."}
+          </p>
+        </div>
+      )}
       {/* Incident Header & Overview */}
 
       {/* Incident Metadata */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 shadow-sm">
+        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Reported by
           </h3>
@@ -117,7 +134,7 @@ export default function IncidentDetailPage() {
           </p>
         </article>
 
-        <article className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 shadow-sm">
+        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Assigned to
           </h3>
@@ -128,14 +145,16 @@ export default function IncidentDetailPage() {
           </p>
         </article>
 
-        <article className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 shadow-sm">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">Created</h3>
+        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+            Created
+          </h3>
           <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
             {new Date(incident.created_at).toLocaleString()}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 shadow-sm">
+        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Last updated
           </h3>
@@ -152,7 +171,7 @@ export default function IncidentDetailPage() {
         {/* History and Comments Column */}
         <InvestigationHistory incidentId={incidentId} />
       </div>
-
+      <CommentsSection incidentId={incidentId} />
       <AuditTimeline incidentId={incidentId} />
     </main>
   );
