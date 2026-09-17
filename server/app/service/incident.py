@@ -436,7 +436,10 @@ class IncidentService:
         )
 
         if self.ai_service is None:
-            raise AIConfigurationError(provider="ai", cause=RuntimeError("AI investigation service is not configured"))
+            raise AIConfigurationError(
+                provider="ai",
+                cause=RuntimeError("AI investigation service is not configured"),
+            )
 
         try:
             output = await self.ai_service.investigate(context)
@@ -446,6 +449,7 @@ class IncidentService:
         except Exception as exc:
             # Unexpected errors become integration errors
             from app.exception.integration import IntegrationConnectionError
+
             raise IntegrationConnectionError(provider="ai", cause=exc) from exc
 
         await self.investigation_repository.create(
@@ -458,10 +462,6 @@ class IncidentService:
             result=output.result.model_dump(mode="json"),
             confidence=output.result.confidence,
         )
-
-        await self.db.commit()
-
-        return output.result
 
         await self.db.commit()
 

@@ -55,6 +55,7 @@ def client():
 
     with TestClient(
         app,
+        base_url="http://testserver/api/v1",
         raise_server_exceptions=False,
     ) as test_client:
         yield test_client
