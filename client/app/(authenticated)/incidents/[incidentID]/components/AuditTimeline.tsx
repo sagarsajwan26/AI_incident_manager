@@ -1,9 +1,5 @@
 "use client";
-import {
-  IncidentAudit,
-  useGetIncidentAuditQuery,
-  useGetIncidentEvidenceQuery,
-} from "@/app/lib/services/api";
+import { useGetIncidentAuditQuery } from "@/app/lib/services/api";
 
 type AuditTimelineProps = {
   incidentId: number;
@@ -26,7 +22,9 @@ export default function AuditTimeline({ incidentId }: AuditTimelineProps) {
   return (
     <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
       <header className="mb-6">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Activity</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          Activity
+        </h2>
 
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           History of changes and actions performed on this incident.
@@ -34,7 +32,9 @@ export default function AuditTimeline({ incidentId }: AuditTimelineProps) {
       </header>
 
       {isLoading && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading activity...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Loading activity...
+        </p>
       )}
 
       {isError && (
@@ -42,7 +42,9 @@ export default function AuditTimeline({ incidentId }: AuditTimelineProps) {
       )}
 
       {!isLoading && !isError && auditLogs.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No activity recorded yet.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          No activity recorded yet.
+        </p>
       )}
 
       {!isLoading && !isError && auditLogs.length > 0 && (

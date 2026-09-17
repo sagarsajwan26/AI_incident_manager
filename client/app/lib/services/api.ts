@@ -39,6 +39,8 @@ type Investigation = {
   likely_root_cause: string;
   root_cause_status: "confirmed" | "probable" | "unknown";
   evidence: string[];
+  evidence_assessment: string;
+
   impact: string;
   recommended_actions: string[];
   unknowns: string[];
@@ -105,6 +107,42 @@ export type IncidentAudit = {
   details: string | null;
   created_at: string;
 };
+type CreateIncidentRequest = {
+  title: string;
+  description: string;
+  severity: Incident["severity"];
+};
+type AssignIncidentRequest = {
+  incidentId: number;
+  investigator_id: number;
+};
+export type Investigator = {
+  id: number;
+  name: string;
+  email: string;
+};
+
+export type IntegrationProvider = "github" | "slack";
+
+export type Integration = {
+  id: number;
+  provider: IntegrationProvider;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+export type CreateIntegrationRequest = {
+  provider: IntegrationProvider;
+  credentials: Record<string, unknown>;
+  is_active?: boolean;
+};
+
+export type UpdateIntegrationRequest = {
+  integrationId: number;
+  credentials?: Record<string, number>;
+  is_active?: boolean;
+};
+
 export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
@@ -118,6 +156,8 @@ export const api = createApi({
     "Incident",
     "Comment",
     "Audit",
+    "User",
+    "Integration",
   ],
   endpoints: (builder) => ({
     register: builder.mutation<RegisterResponse, RegisterRequest>({
@@ -155,6 +195,19 @@ export const api = createApi({
         url: "/api/v1/incidents/",
         method: "GET",
       }),
+      providesTags: (result) =>
+        result
+          ? [
+              {
+                type: "Incident",
+                id: "LIST",
+              },
+              ...result.map(({ id }) => ({
+                type: "Incident" as const,
+                id,
+              })),
+            ]
+          : [{ type: "Incident", id: "LIST" }],
     }),
     getIncident: builder.query<Incident, number>({
       query: (incidentId) => ({
@@ -226,6 +279,7 @@ export const api = createApi({
       }),
       invalidatesTags: (_result, _error, { incidentId }) => [
         { type: "Incident", id: incidentId },
+        { type: "Audit", id: incidentId },
       ],
     }),
 
@@ -267,6 +321,78 @@ export const api = createApi({
         { type: "Audit", id: incidentId },
       ],
     }),
+    createIncident: builder.mutation<Incident, CreateIncidentRequest>({
+      query: (body) => ({
+        url: "/api/v1/incidents/",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Incident"],
+    }),
+    assignIncident: builder.mutation<Incident, AssignIncidentRequest>({
+      query: ({ incidentId, investigator_id }) => ({
+        url: `/api/v1/incidents/${incidentId}/assign`,
+        method: "PATCH",
+        body: {
+          investigator_id,
+        },
+      }),
+      invalidatesTags: (_result, _error, { incidentId }) => [
+        { type: "Incident", id: incidentId },
+        {
+          type: "Incident",
+          id: "LIST",
+        },
+      ],
+    }),
+    getInvestigators: builder.query<Investigator[], void>({
+      query: () => "/api/v1/users/investigators",
+      providesTags: ["User"],
+    }),
+    deleteIncidentComment: builder.mutation<
+      { message: string },
+      { incidentId: number; commentId: number }
+    >({
+      query: ({ incidentId, commentId }) => ({
+        url: `/api/v1/incidents/${incidentId}/comments/${commentId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, { incidentId }) => [
+        { type: "Comment", id: incidentId },
+      ],
+    }),
+    createIntegration: builder.mutation<Integration, CreateIncidentRequest>({
+      query: (body) => ({
+        url: `/integration/`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Integration"],
+    }),
+    getIntegrations: builder.query<Integration[], void>({
+      query: () => "/integration/",
+      providesTags: ["Integration"],
+    }),
+    getIntegration: builder.query<Integration, number>({
+      query: (integrationId) => `/integration/${integrationId}`,
+      providesTags: ["Integration"],
+    }),
+    updateIntegration: builder.mutation<Integration, UpdateIntegrationRequest>({
+      query: ({ integrationId, ...body }) => ({
+        url: `/integration/${integrationId}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Integration"],
+    }),
+
+    deleteIntegration: builder.mutation<void, number>({
+      query: (integrationId) => ({
+        url: `/integration/${integrationId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Integration"],
+    }),
   }),
 });
 
@@ -287,4 +413,10 @@ export const {
   useAddIncidentCommentMutation,
   useUpdateIncidentCommentMutation,
   useGetIncidentAuditQuery,
+  useCreateIncidentMutation,
+  useAssignIncidentMutation,
+  useGetInvestigatorsQuery,
+  useDeleteIncidentCommentMutation,
+  useCreateIntegrationMutation,
+  useGetIntegrationsQuery,
 } = api;

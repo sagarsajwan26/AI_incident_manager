@@ -1,5 +1,11 @@
 "use client";
-import type { Incident } from "@/app/lib/services/api";
+import {
+  type Incident,
+  useAssignIncidentMutation,
+  useGetInvestigatorsQuery,
+} from "@/app/lib/services/api";
+
+import { useState } from "react";
 type IncidentHeaderProps = {
   incident: Incident;
   isInvestigating: boolean;
@@ -27,6 +33,13 @@ const statusStyles: Record<Incident["status"], string> = {
   closed:
     "bg-black/5 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 dark:bg-white/5",
 };
+
+const nextStatus: Partial<Record<Incident["status"], Incident["status"]>> = {
+  open: "investigating",
+  investigating: "contained",
+  contained: "resolved",
+  resolved: "closed",
+};
 export default function IncidentHeader({
   incident,
   isInvestigating,
@@ -34,19 +47,52 @@ export default function IncidentHeader({
   onInvestigate,
   onStatusChange,
 }: IncidentHeaderProps) {
+  const { data: investigators = [], isLoading: isLoadingInvestigators } =
+    useGetInvestigatorsQuery();
+
+  const [assignIncident, { isLoading: isAssigning }] =
+    useAssignIncidentMutation();
+  const [assignmentError, setAssignmentError] = useState("");
+  const [statusError, setStatusError] = useState("");
+  const handleAssign = async (investigatorId: number) => {
+    setAssignmentError("");
+    try {
+      await assignIncident({
+        incidentId: incident.id,
+        investigator_id: investigatorId,
+      }).unwrap();
+    } catch (error: unknown) {
+      const apiError = error as {
+        data?: {
+          detail?: string;
+        };
+      };
+
+      setAssignmentError(
+        apiError?.data?.detail ?? "unable to assign this incident",
+      );
+    }
+  };
+  const next = nextStatus[incident.status];
+
   return (
-    <header className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+    <header className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      {assignmentError && (
+        <p className="basis-full text-xs text-red-500">{assignmentError}</p>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Incident #{incident.id}
           </p>
+
           <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
             {incident.title}
           </h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Severity */}
           <span
             className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${
               severityStyles[incident.severity]
@@ -55,6 +101,7 @@ export default function IncidentHeader({
             {incident.severity}
           </span>
 
+          {/* Current status */}
           <span
             className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${
               statusStyles[incident.status]
@@ -63,37 +110,77 @@ export default function IncidentHeader({
             {incident.status}
           </span>
 
+          {/* Status selector */}
           <select
             value={incident.status}
-            onChange={(event) =>
-              onStatusChange(event.target.value as Incident["status"])
-            }
+            onChange={(event) => {
+              onStatusChange(event.target.value as Incident["status"]);
+            }}
             disabled={isUpdatingStatus}
             aria-label="Update incident status"
-            className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-1.5 text-sm font-medium text-gray-900 dark:text-gray-100 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           >
-            <option value="open">Open</option>
-            <option value="investigating">Investigating</option>
-            <option value="contained">Contained</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
+            <option value={incident.status}>
+              {incident.status.charAt(0).toUpperCase() +
+                incident.status.slice(1)}
+            </option>
+
+            {next && (
+              <option value={next}>
+                {next.charAt(0).toUpperCase() + next.slice(1)}
+              </option>
+            )}
           </select>
 
+          {/* Investigator selector */}
+          <select
+            value={incident.assigned_to ?? ""}
+            onChange={(event) => {
+              const value = event.target.value;
+
+              if (!value) {
+                return;
+              }
+
+              void handleAssign(Number(value));
+            }}
+            disabled={isLoadingInvestigators || isAssigning}
+            aria-label="Assign investigator"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+          >
+            <option value="">
+              {isLoadingInvestigators
+                ? "Loading investigators..."
+                : incident.assigned_to
+                  ? "Change investigator"
+                  : "Assign investigator"}
+            </option>
+
+            {investigators.map((investigator) => (
+              <option key={investigator.id} value={investigator.id}>
+                {investigator.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Investigate */}
           <button
             type="button"
             onClick={onInvestigate}
             disabled={isInvestigating}
-            className="rounded-full bg-blue-600 dark:bg-blue-500 px-4 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500"
           >
             {isInvestigating ? "Investigating..." : "Investigate"}
           </button>
         </div>
       </div>
 
+      {/* Description */}
       <div className="mt-6">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           Description
         </h2>
+
         <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-500 dark:text-gray-400">
           {incident.description}
         </p>
