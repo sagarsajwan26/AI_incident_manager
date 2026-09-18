@@ -5,17 +5,24 @@ import {
   useTestIntegrationMutation,
 } from "@/app/lib/services/api";
 import IntegrationCard from "./IntegrationCard";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 export default function IntegrationPage() {
   const { data: integrations, isLoading, isError } = useGetIntegrationsQuery();
   const [testIntegration, { isLoading: isTesting }] = useTestIntegrationMutation();
+  const [testResult, setTestResult] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const handleTest = async (integrationId: number) => {
     try {
+      setTestResult(null);
       await testIntegration(integrationId).unwrap();
+      setTestResult({ type: 'success', message: 'Connection test successful!' });
+      setTimeout(() => setTestResult(null), 3000);
     } catch (error) {
       console.error("Integration test failed:", error);
+      setTestResult({ type: 'error', message: 'Connection test failed. Please check credentials.' });
+      setTimeout(() => setTestResult(null), 5000);
     }
   };
 
@@ -38,7 +45,25 @@ export default function IntegrationPage() {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen p-8 relative">
+      {/* Toast Notification */}
+      {testResult && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
+          <div className={`flex items-center gap-3 rounded-full px-6 py-3 shadow-2xl backdrop-blur-xl border ${
+            testResult.type === 'success' 
+              ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' 
+              : 'bg-red-500/20 border-red-500/30 text-red-400'
+          }`}>
+            {testResult.type === 'success' ? (
+              <CheckCircleIcon className="h-5 w-5" />
+            ) : (
+              <XCircleIcon className="h-5 w-5" />
+            )}
+            <span className="text-sm font-semibold">{testResult.message}</span>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">Integrations</h1>
