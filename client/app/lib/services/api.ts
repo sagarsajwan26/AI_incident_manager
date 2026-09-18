@@ -361,25 +361,25 @@ export const api = createApi({
         { type: "Comment", id: incidentId },
       ],
     }),
-    createIntegration: builder.mutation<Integration, CreateIncidentRequest>({
+    createIntegration: builder.mutation<Integration, CreateIntegrationRequest>({
       query: (body) => ({
-        url: `/integration/`,
+        url: `/api/v1/integration`,
         method: "POST",
         body,
       }),
       invalidatesTags: ["Integration"],
     }),
     getIntegrations: builder.query<Integration[], void>({
-      query: () => "/integration/",
+      query: () => "/api/v1/integration",
       providesTags: ["Integration"],
     }),
     getIntegration: builder.query<Integration, number>({
-      query: (integrationId) => `/integration/${integrationId}`,
+      query: (integrationId) => `/api/v1/integration/${integrationId}`,
       providesTags: ["Integration"],
     }),
     updateIntegration: builder.mutation<Integration, UpdateIntegrationRequest>({
       query: ({ integrationId, ...body }) => ({
-        url: `/integration/${integrationId}`,
+        url: `/api/v1/integration/${integrationId}`,
         method: "PATCH",
         body,
       }),
@@ -388,10 +388,16 @@ export const api = createApi({
 
     deleteIntegration: builder.mutation<void, number>({
       query: (integrationId) => ({
-        url: `/integration/${integrationId}`,
+        url: `/api/v1/integration/${integrationId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Integration"],
+    }),
+    testIntegration: builder.mutation<unknown, number>({
+      query: (integrationId) => ({
+        url: `/api/v1/integration/${integrationId}/test`,
+        method: "POST",
+      }),
     }),
   }),
 });
@@ -419,4 +425,8 @@ export const {
   useDeleteIncidentCommentMutation,
   useCreateIntegrationMutation,
   useGetIntegrationsQuery,
+  useGetIntegrationQuery,
+  useUpdateIntegrationMutation,
+  useDeleteIntegrationMutation,
+  useTestIntegrationMutation,
 } = api;
