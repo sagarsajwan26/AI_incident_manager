@@ -3,7 +3,11 @@ from app.dependencies.auth import get_current_user, require_role
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_db
 from app.models.user import User, UserRole
-from app.schemas.integration import IntegrationCreate, IntegrationResponse, IntegrationUpdate
+from app.schemas.integration import (
+    IntegrationCreate,
+    IntegrationResponse,
+    IntegrationUpdate,
+)
 from app.service.integration import IntegrationService
 from app.exception.integration import DuplicateIntegrationError
 
@@ -28,6 +32,11 @@ async def create_integration(
             is_active=data.is_active,
         )
     except DuplicateIntegrationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
@@ -117,12 +126,14 @@ async def test_integration(
 ):
     service = IntegrationService(db)
 
-    integration = await service.get_integration(
-        integration_id=integration_id, tenant_id=current_user.tenant_id
-    )
-    if integration is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="missing the integration"
+    try:
+        integration = await service.test_integration(
+            integration_id=integration_id, tenant_id=current_user.tenant_id
         )
 
-    return {"status": "success", "message": f"Integration {integration.provider} connection successful."}
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return {
+        "status": "success",
+        "message": f"Integration {integration.provider} connection successfull",
+    }

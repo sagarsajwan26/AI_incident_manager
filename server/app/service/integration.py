@@ -2,6 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository.integration_repository import IntegrationRepository
 from app.models.integration import Integration
 from app.exception.integration import DuplicateIntegrationError
+from app.service.integration_test_service import IntegrationTestservice
+
 
 class IntegrationService:
     def __init__(self, db: AsyncSession):
@@ -15,9 +17,18 @@ class IntegrationService:
         )
 
         if existing is not None:
-           raise DuplicateIntegrationError(
-    f"Integration for provider '{provider}' already exists."
-)
+            raise DuplicateIntegrationError(
+                f"Integration for provider '{provider}' already exists."
+            )
+
+        token = credentials.get("token")
+
+        if not token:
+            raise ValueError("Integration token is required")
+
+        tester = IntegrationTestservice()
+
+        await tester.test(provider=provider, token=token)
 
         return await self.repository.create(
             tenant_id=tenant_id,
@@ -72,3 +83,25 @@ class IntegrationService:
         return await self.repository.get_by_provider_and_tenant(
             provider=provider, tenant_id=tenant_id
         )
+
+    async def test_integration(
+        self, integration_id: int, tenant_id: int
+    ) -> Integration:
+        integration = await self.repository.get_by_id_and_tenant(
+            integration_id=integration_id, tenant_id=tenant_id
+        )
+
+        if integration is None:
+            raise ValueError("Integration is inactive")
+
+        token = integration.credentials.get("token")
+        if not token:
+            raise ValueError("integration is missing")
+
+        tester = IntegrationTestservice()
+        await tester.test(
+            provider=integration.provider,
+            token=token,
+        )
+
+        return integration
