@@ -76,7 +76,7 @@ export default function IncidentHeader({
   const next = nextStatus[incident.status];
 
   return (
-    <header className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+    <header className="rounded-2xl glass-panel p-6 shadow-sm animate-fade-in-up">
       {assignmentError && (
         <p className="basis-full text-xs text-red-500">{assignmentError}</p>
       )}
@@ -118,7 +118,7 @@ export default function IncidentHeader({
             }}
             disabled={isUpdatingStatus}
             aria-label="Update incident status"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+            className="rounded-lg border border-transparent bg-black/5 px-3 py-1.5 text-sm font-medium text-black outline-none transition focus:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/5 dark:text-white dark:focus:border-gray-700"
           >
             <option value={incident.status}>
               {incident.status.charAt(0).toUpperCase() +
@@ -146,7 +146,7 @@ export default function IncidentHeader({
             }}
             disabled={isLoadingInvestigators || isAssigning}
             aria-label="Assign investigator"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+            className="rounded-lg border border-transparent bg-black/5 px-3 py-1.5 text-sm font-medium text-black outline-none transition focus:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/5 dark:text-white dark:focus:border-gray-700"
           >
             <option value="">
               {isLoadingInvestigators
@@ -168,7 +168,7 @@ export default function IncidentHeader({
             type="button"
             onClick={onInvestigate}
             disabled={isInvestigating}
-            className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500"
+            className="rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black"
           >
             {isInvestigating ? "Investigating..." : "Investigate"}
           </button>

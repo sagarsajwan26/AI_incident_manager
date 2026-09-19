@@ -1,5 +1,5 @@
 "use client";
-
+import GithubEvidenceCollector from "./[incidentID]/GithubEvidenceCollector";
 import { type Incident, useGetIncidentsQuery } from "@/app/lib/services/api";
 import Link from "next/link";
 import { useState } from "react";
@@ -70,7 +70,7 @@ export default function IncidentPage() {
           Incidents
         </h1>
 
-        <div className="mt-6 rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-8 shadow-sm">
+        <div className="mt-6 rounded-2xl glass-panel p-8 shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -144,8 +144,8 @@ export default function IncidentPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-16 text-center shadow-sm flex flex-col items-center justify-center">
-          <div className="w-20 h-20 rounded-full bg-black/5 dark:bg-white/5 border border-gray-200 dark:border-gray-800 flex items-center justify-center mb-6 shadow-sm">
+        <div className="mt-8 rounded-2xl glass-panel p-16 text-center shadow-sm flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-full bg-black/5 dark:bg-white/5 border border-transparent flex items-center justify-center mb-6 shadow-sm">
             <svg
               className="w-10 h-10 text-gray-500 dark:text-gray-400"
               fill="none"
@@ -187,10 +187,15 @@ export default function IncidentPage() {
 
         <Link
           href={"/incidents/new"}
-          className="rounded-full bg-blue-600 dark:bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 active:scale-95"
+          className="rounded-full bg-black dark:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-black shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
           + New Incident
         </Link>
+      </div>
+
+      {/* Global GitHub Evidence Collector */}
+      <div className="mt-8 mb-4">
+        <GithubEvidenceCollector />
       </div>
 
       <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -200,7 +205,7 @@ export default function IncidentPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search incidents..."
-          className="rounded-xl border border-gray-200/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm px-4 py-2.5 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-800/50 dark:text-gray-100 dark:placeholder:text-gray-600 shadow-sm hover:border-gray-300 dark:hover:border-gray-700"
+          className="rounded-xl border border-transparent bg-black/5 dark:bg-white/5 px-4 py-2.5 text-sm text-black dark:text-white outline-none transition-all placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 shadow-sm"
         />
 
         {/* Status */}
@@ -209,7 +214,7 @@ export default function IncidentPage() {
           onChange={(event) =>
             setStatusFilter(event.target.value as Incident["status"] | "all")
           }
-          className="rounded-xl border border-gray-200/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm px-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-800/50 dark:text-gray-100 shadow-sm hover:border-gray-300 dark:hover:border-gray-700"
+          className="rounded-xl border border-transparent bg-black/5 dark:bg-white/5 px-4 py-2.5 text-sm text-black dark:text-white outline-none transition-all focus:border-gray-300 dark:focus:border-gray-700 shadow-sm"
         >
           <option value="all">All statuses</option>
           <option value="open">Open</option>
@@ -227,7 +232,7 @@ export default function IncidentPage() {
               event.target.value as Incident["severity"] | "all",
             )
           }
-          className="rounded-xl border border-gray-200/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm px-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-800/50 dark:text-gray-100 shadow-sm hover:border-gray-300 dark:hover:border-gray-700"
+          className="rounded-xl border border-transparent bg-black/5 dark:bg-white/5 px-4 py-2.5 text-sm text-black dark:text-white outline-none transition-all focus:border-gray-300 dark:focus:border-gray-700 shadow-sm"
         >
           <option value="all">All severities</option>
           <option value="low">Low</option>
@@ -257,7 +262,7 @@ export default function IncidentPage() {
         )}
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm shadow-xl shadow-gray-200/20 dark:shadow-black/20">
+      <div className="mt-8 overflow-hidden rounded-2xl glass-panel shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left border-collapse">
             <thead className="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-200/50 dark:border-gray-800/50">
@@ -293,7 +298,7 @@ export default function IncidentPage() {
                         href={`/incidents/${incident.id}`}
                         className="block"
                       >
-                        <span className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <span className="font-medium text-black dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors">
                           {incident.title}
                         </span>
                       </Link>

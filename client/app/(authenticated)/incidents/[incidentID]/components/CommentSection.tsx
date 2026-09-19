@@ -78,7 +78,7 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
   };
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 shadow-sm">
+    <section className="rounded-2xl glass-panel p-6 shadow-sm">
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">
           Comments
@@ -99,18 +99,18 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
           comments.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border border-[var(--border)] bg-black/5 p-4 dark:bg-white/5"
+              className="rounded-xl border border-transparent bg-black/5 p-4 dark:bg-white/5"
             >
               {editingCommentId === item.id ? (
                 /* Edit mode */
                 <div>
-                  <textarea
-                    value={editingContent}
-                    onChange={(event) => setEditingContent(event.target.value)}
-                    rows={4}
-                    disabled={isUpdatingComment}
-                    className="w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:text-gray-100"
-                  />
+                    <textarea
+                      value={editingContent}
+                      onChange={(event) => setEditingContent(event.target.value)}
+                      rows={4}
+                      disabled={isUpdatingComment}
+                      className="w-full rounded-lg border border-transparent bg-black/5 px-3 py-2 text-sm text-black outline-none transition focus:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/5 dark:text-white dark:focus:border-gray-700"
+                    />
 
                   <div className="mt-3 flex justify-end gap-2">
                     <button
@@ -129,7 +129,7 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
                       type="button"
                       onClick={() => void handleEditComment(item.id)}
                       disabled={isUpdatingComment || !editingContent.trim()}
-                      className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black"
                     >
                       {isUpdatingComment ? "Saving..." : "Save"}
                     </button>
@@ -184,7 +184,7 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
           placeholder="Add a comment..."
           rows={4}
           disabled={isAddingComment}
-          className="w-full rounded-xl border border-[var(--border)] bg-transparent px-4 py-3 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl border border-transparent bg-black/5 px-4 py-3 text-sm text-black outline-none transition placeholder:text-gray-400 focus:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/5 dark:text-white dark:focus:border-gray-700"
         />
 
         <div className="mt-3 flex justify-end">
@@ -194,7 +194,7 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
             disabled={
               isAddingComment || !comment.trim() || editingCommentId !== null
             }
-            className="rounded-lg bg-[var(--foreground)] px-4 py-2 text-sm font-semibold text-[var(--background)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black"
           >
             {isAddingComment ? "Adding..." : "Add comment"}
           </button>

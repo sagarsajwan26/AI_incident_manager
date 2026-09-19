@@ -31,7 +31,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-white px-8 py-12 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <main className="min-h-screen px-8 py-12">
         <p className="text-gray-500 dark:text-gray-400">Loading dashboard...</p>
       </main>
     );
@@ -39,21 +39,21 @@ export default function DashboardPage() {
 
   if (isError) {
     return (
-      <main className="min-h-screen bg-white px-8 py-12 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <main className="min-h-screen px-8 py-12">
         <p className="text-red-500">Unable to load incident dashboard.</p>
       </main>
     );
   }
   return (
-    <main className="min-h-screen bg-white px-8 py-12 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen px-8 py-12">
+      <div className="mx-auto max-w-7xl animate-fade-in-up">
         {/* Header */}
         <div className="mb-10">
-          <div className="mb-4 inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+          <div className="mb-4 inline-flex items-center rounded-full border border-gray-200/50 dark:border-gray-800/50 bg-black/5 dark:bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Operations Overview
           </div>
 
-          <h1 className="text-4xl font-extrabold tracking-tight">
+          <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
             AI Incident Manager
           </h1>
 
@@ -94,7 +94,7 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm shadow-xl shadow-gray-200/20 dark:shadow-black/20">
+          <div className="overflow-hidden rounded-2xl glass-panel shadow-sm border border-gray-200/50 dark:border-gray-800/50">
             {recentIncidents.length === 0 ? (
               <div className="p-12 text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
                 No incidents found. You're all clear!
@@ -105,12 +105,12 @@ export default function DashboardPage() {
                   <Link
                     key={incident.id}
                     href={`/incidents/${incident.id}`}
-                    className="block p-5 transition-colors hover:bg-white dark:hover:bg-gray-800"
+                    className="block p-5 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors">{incident.title}</h3>
+                          <h3 className="font-semibold text-black dark:text-white group-hover:text-gray-600 transition-colors">{incident.title}</h3>
 
                           <SeverityBadge severity={incident.severity} />
                         </div>
@@ -135,12 +135,12 @@ export default function DashboardPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white dark:bg-gray-900 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-200 dark:hover:shadow-black/50">
+    <div className="rounded-2xl glass-panel p-6 shadow-sm border border-gray-200/50 dark:border-gray-800/50 transition-all hover:scale-[1.02]">
       <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
         {label}
       </p>
 
-      <p className="mt-3 text-4xl font-extrabold">{value}</p>
+      <p className="mt-3 text-4xl font-bold text-black dark:text-white">{value}</p>
     </div>
   );
 }

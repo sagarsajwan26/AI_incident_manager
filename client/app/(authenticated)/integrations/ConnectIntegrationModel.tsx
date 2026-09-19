@@ -46,19 +46,24 @@ export default function ConnectIntegrationmodel({
       handleClose();
     } catch (error: any) {
       console.error("Failed to create integration:", error);
-      setErrorMsg(
-        error?.data?.detail || "Failed to connect integration. Please check your token."
-      );
+      const detail = error?.data?.detail;
+      let msg = "Failed to connect integration. Please check your token.";
+      if (typeof detail === "string") {
+        msg = detail;
+      } else if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) {
+        msg = detail[0].msg;
+      }
+      setErrorMsg(msg);
     }
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-gray-900 p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl glass-panel p-6 shadow-xl animate-fade-in-up">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-white">Add Integration</h2>
+            <h2 className="text-xl font-bold text-black dark:text-white">Add Integration</h2>
 
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Connect GitHub or Slack to your incident manager.
             </p>
           </div>
@@ -66,7 +71,7 @@ export default function ConnectIntegrationmodel({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-400 transition hover:bg-white/10 hover:text-white"
+            className="rounded-full p-2 text-gray-500 transition hover:bg-black/5 dark:hover:bg-white/10 dark:text-gray-400"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -82,7 +87,7 @@ export default function ConnectIntegrationmodel({
           <div>
             <label
               htmlFor="provider"
-              className="mb-2 block text-sm font-medium text-gray-300"
+              className="mb-2 block text-sm font-medium text-black dark:text-gray-300"
             >
               Provider
             </label>
@@ -93,7 +98,7 @@ export default function ConnectIntegrationmodel({
               onChange={(event) =>
                 setProvider(event.target.value as IntegrationProvider)
               }
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+              className="w-full rounded-xl border border-transparent bg-black/5 dark:bg-white/5 px-4 py-3 text-sm text-black dark:text-white outline-none transition focus:border-gray-300 dark:focus:border-gray-700"
             >
               <option value="github" className="bg-gray-900">
                 GitHub
@@ -120,7 +125,7 @@ export default function ConnectIntegrationmodel({
               onChange={(event) => setToken(event.target.value)}
               placeholder="Enter your access token"
               required
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-gray-500 outline-none transition focus:border-blue-500"
+              className="w-full rounded-xl border border-transparent bg-black/5 dark:bg-white/5 px-4 py-3 text-sm text-black dark:text-white placeholder:text-gray-400 outline-none transition focus:border-gray-300 dark:focus:border-gray-700"
             />
           </div>
 
@@ -129,7 +134,7 @@ export default function ConnectIntegrationmodel({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-gray-300 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+              className="rounded-full border border-gray-200/50 dark:border-white/10 bg-transparent px-4 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-300 transition hover:bg-black/5 dark:hover:bg-white/10 hover:text-black dark:hover:text-white disabled:opacity-50"
             >
               Cancel
             </button>
@@ -137,7 +142,7 @@ export default function ConnectIntegrationmodel({
             <button
               type="submit"
               disabled={isLoading}
-              className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black"
             >
               {isLoading ? "Connecting..." : "Connect"}
             </button>

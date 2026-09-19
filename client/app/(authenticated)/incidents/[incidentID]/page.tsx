@@ -14,6 +14,7 @@ import CommentsSection from "./components/CommentSection";
 import EvidenceSection from "./components/EvidenceSection";
 import { InvestigationHistory } from "./components/InvestigationHistory";
 import AuditTimeline from "./components/AuditTimeline";
+import GithubEvidenceCollector from "./GithubEvidenceCollector";
 
 export default function IncidentDetailPage() {
   const params = useParams();
@@ -98,6 +99,9 @@ export default function IncidentDetailPage() {
         </Link>
       </nav>
 
+      {/* GitHub Evidence Collector - Top of page */}
+      <GithubEvidenceCollector incidentId={incidentId} />
+
       {isInvestigationError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/20 dark:bg-red-500/10">
           <p className="text-sm font-medium text-red-600 dark:text-red-400">
@@ -124,8 +128,8 @@ export default function IncidentDetailPage() {
       {/* Incident Header & Overview */}
 
       {/* Incident Metadata */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up">
+        <article className="rounded-2xl glass-panel p-5 shadow-sm transition-transform hover:-translate-y-1 hover:scale-[1.02]">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Reported by
           </h3>
@@ -134,7 +138,7 @@ export default function IncidentDetailPage() {
           </p>
         </article>
 
-        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
+        <article className="rounded-2xl glass-panel p-5 shadow-sm transition-transform hover:-translate-y-1 hover:scale-[1.02]">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Assigned to
           </h3>
@@ -145,7 +149,7 @@ export default function IncidentDetailPage() {
           </p>
         </article>
 
-        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
+        <article className="rounded-2xl glass-panel p-5 shadow-sm transition-transform hover:-translate-y-1 hover:scale-[1.02]">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Created
           </h3>
@@ -154,7 +158,7 @@ export default function IncidentDetailPage() {
           </p>
         </article>
 
-        <article className="rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
+        <article className="rounded-2xl glass-panel p-5 shadow-sm transition-transform hover:-translate-y-1 hover:scale-[1.02]">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Last updated
           </h3>
@@ -166,7 +170,9 @@ export default function IncidentDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Evidence Column */}
-        <EvidenceSection incidentId={incidentId} />
+        <div className="space-y-6">
+          <EvidenceSection incidentId={incidentId} />
+        </div>
 
         {/* History and Comments Column */}
         <InvestigationHistory incidentId={incidentId} />

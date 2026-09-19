@@ -20,7 +20,7 @@ export default function AuditTimeline({ incidentId }: AuditTimelineProps) {
   } = useGetIncidentAuditQuery(incidentId);
 
   return (
-    <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+    <section className="rounded-2xl glass-panel p-6 shadow-sm">
       <header className="mb-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
           Activity
@@ -53,7 +53,7 @@ export default function AuditTimeline({ incidentId }: AuditTimelineProps) {
 
           {auditLogs.map((log) => (
             <article key={log.id} className="relative pl-8">
-              <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-[var(--background)] bg-blue-600 dark:bg-blue-500" />
+              <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-[var(--background)] bg-black dark:bg-white" />
 
               <div>
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">

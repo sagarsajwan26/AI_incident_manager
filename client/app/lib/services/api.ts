@@ -60,7 +60,7 @@ export type Incident = {
   updated_at: string;
 };
 
-type Evidence = {
+export type Evidence = {
   id: number;
   incident_id: number;
   tenant_id: number;
@@ -139,10 +139,17 @@ export type CreateIntegrationRequest = {
 
 export type UpdateIntegrationRequest = {
   integrationId: number;
-  credentials?: Record<string, number>;
+  credentials?: {
+    token: string;
+  };
   is_active?: boolean;
 };
 
+export type GithubEvidenceRequest = {
+  owner: string;
+  repo: string;
+  per_page?: number;
+};
 export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
@@ -399,6 +406,33 @@ export const api = createApi({
         method: "POST",
       }),
     }),
+    collectGithubEvidence: builder.mutation<
+      Evidence[],
+      { incidentId: number; body: GithubEvidenceRequest }
+    >({
+      query: ({ incidentId, body }) => ({
+        url: `/api/v1/incidents/${incidentId}/evidence/github`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { incidentId }) => [
+        { type: "Evidence", id: incidentId },
+      ],
+    }),
+
+    collectGithubDeploymentEvidence: builder.mutation<
+      Evidence[],
+      { incidentId: number; body: GithubEvidenceRequest }
+    >({
+      query: ({ incidentId, body }) => ({
+        url: `/api/v1/incidents/${incidentId}/evidence/github/deployments`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { incidentId }) => [
+        { type: "Evidence", id: incidentId },
+      ],
+    }),
   }),
 });
 
@@ -429,4 +463,6 @@ export const {
   useUpdateIntegrationMutation,
   useDeleteIntegrationMutation,
   useTestIntegrationMutation,
+  useCollectGithubDeploymentEvidenceMutation,
+  useCollectGithubEvidenceMutation,
 } = api;

@@ -27,26 +27,26 @@ export default function CreateIncidentPage() {
   };
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
+    <main className="mx-auto max-w-2xl p-8 animate-fade-in-up">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white">
+        <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white">
           Create Incident
         </h1>
 
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Report a production incident for investigation.
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl"
+        className="space-y-6 rounded-2xl glass-panel p-8 shadow-sm"
       >
         {/* Title */}
         <div>
           <label
             htmlFor="title"
-            className="mb-2 block text-sm font-semibold text-gray-300"
+            className="mb-2 block text-sm font-semibold text-black dark:text-white"
           >
             Title
           </label>
@@ -60,7 +60,7 @@ export default function CreateIncidentPage() {
             placeholder="API requests failing in production"
             required
             disabled={isLoading}
-            className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-black/50 px-4 py-3 text-sm text-black dark:text-white outline-none transition placeholder:text-gray-400 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
@@ -68,7 +68,7 @@ export default function CreateIncidentPage() {
         <div>
           <label
             htmlFor="description"
-            className="mb-2 block text-sm font-semibold text-gray-300"
+            className="mb-2 block text-sm font-semibold text-black dark:text-white"
           >
             Description
           </label>
@@ -82,7 +82,7 @@ export default function CreateIncidentPage() {
             rows={6}
             required
             disabled={isLoading}
-            className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-black/50 px-4 py-3 text-sm text-black dark:text-white outline-none transition placeholder:text-gray-400 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
@@ -90,7 +90,7 @@ export default function CreateIncidentPage() {
         <div>
           <label
             htmlFor="severity"
-            className="mb-2 block text-sm font-semibold text-gray-300"
+            className="mb-2 block text-sm font-semibold text-black dark:text-white"
           >
             Severity
           </label>
@@ -104,23 +104,23 @@ export default function CreateIncidentPage() {
                 setSeverity(event.target.value as Incident["severity"])
               }
               disabled={isLoading}
-              className="w-full appearance-none rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full appearance-none rounded-xl border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-black/50 px-4 py-3 text-sm text-black dark:text-white outline-none transition focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <option value="low" className="bg-gray-900 text-white">Low</option>
-              <option value="medium" className="bg-gray-900 text-white">Medium</option>
-              <option value="high" className="bg-gray-900 text-white">High</option>
-              <option value="critical" className="bg-gray-900 text-white">Critical</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
             </select>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-4 border-t border-white/10 pt-6">
+        <div className="flex items-center justify-end gap-4 border-t border-gray-200/50 dark:border-gray-800/50 pt-6">
           <button
             type="button"
             onClick={() => router.back()}
             disabled={isLoading}
-            className="rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-300 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full px-4 py-2.5 text-sm font-semibold text-gray-500 transition hover:text-black dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>
@@ -128,11 +128,11 @@ export default function CreateIncidentPage() {
           <button
             type="submit"
             disabled={isLoading || !title.trim() || !description.trim()}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue-500 hover:shadow-blue-500/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full bg-black dark:bg-white px-6 py-2.5 text-sm font-semibold text-white dark:text-black shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white dark:border-black/20 dark:border-t-black" />
                 Creating...
               </>
             ) : (

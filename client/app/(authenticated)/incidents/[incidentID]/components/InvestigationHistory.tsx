@@ -18,7 +18,7 @@ export const InvestigationHistory = ({
   } = useGetIncidentInvestigationsQuery(incidentId);
 
   return (
-    <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+    <section className="rounded-2xl glass-panel p-6 shadow-sm">
       <header className="mb-5">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
           Investigation History
@@ -49,7 +49,7 @@ export const InvestigationHistory = ({
             <Link
               key={item.id}
               href={`/incidents/${incidentId}/investigations/${item.id}`}
-              className="block rounded-xl border border-gray-200 dark:border-gray-800 bg-black/5 p-4 transition-colors hover:border-[var(--accent)] dark:bg-white/5"
+              className="block rounded-xl border border-transparent bg-black/5 p-4 transition-transform hover:scale-[1.02] dark:bg-white/5"
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-gray-900 dark:text-gray-100">

@@ -90,7 +90,7 @@ const InvestigationDetailsPage = () => {
       </nav>
 
       {/* Header */}
-      <header className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+      <header className="rounded-2xl glass-panel p-6 shadow-sm animate-fade-in-up">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -121,13 +121,13 @@ const InvestigationDetailsPage = () => {
       </header>
 
       {/* Summary */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+      <section className="rounded-2xl glass-panel p-6 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Summary</h2>
         <p className="mt-3 text-sm leading-6 text-gray-500 dark:text-gray-400 whitespace-pre-wrap">{investigation.summary}</p>
       </section>
 
       {/* Root Cause */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+      <section className="rounded-2xl glass-panel p-6 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Likely Root Cause</h2>
         <p className="mt-3 text-sm leading-6 text-gray-500 dark:text-gray-400 whitespace-pre-wrap">
           {investigation.likely_root_cause}
@@ -135,14 +135,14 @@ const InvestigationDetailsPage = () => {
       </section>
 
       {/* Impact */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+      <section className="rounded-2xl glass-panel p-6 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Impact</h2>
         <p className="mt-3 text-sm leading-6 text-gray-500 dark:text-gray-400 whitespace-pre-wrap">{investigation.impact}</p>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Evidence */}
-        <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+        <section className="rounded-2xl glass-panel p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">AI Evidence</h2>
           {(!investigation.evidence || investigation.evidence.length === 0) ? (
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
@@ -163,7 +163,7 @@ const InvestigationDetailsPage = () => {
         </section>
 
         {/* Recommended Actions */}
-        <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+        <section className="rounded-2xl glass-panel p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Recommended Actions</h2>
           {(!investigation.recommended_actions || investigation.recommended_actions.length === 0) ? (
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
@@ -174,9 +174,9 @@ const InvestigationDetailsPage = () => {
               {investigation.recommended_actions.map((action, index) => (
                 <li
                   key={index}
-                  className="flex gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-black/5 dark:bg-white/5 p-4"
+                  className="flex gap-3 rounded-xl border border-transparent bg-black/5 dark:bg-white/5 p-4 transition-transform hover:scale-[1.02]"
                 >
-                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                  <span className="font-bold text-black dark:text-white">
                     {index + 1}.
                   </span>
                   <span className="text-sm leading-6 text-gray-900 dark:text-gray-100">
@@ -191,7 +191,7 @@ const InvestigationDetailsPage = () => {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Unknowns */}
-        <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+        <section className="rounded-2xl glass-panel p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Unknowns</h2>
           {(!investigation.unknowns || investigation.unknowns.length === 0) ? (
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
@@ -212,22 +212,22 @@ const InvestigationDetailsPage = () => {
         </section>
 
         {/* Metadata */}
-        <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+        <section className="rounded-2xl glass-panel p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Investigation Metadata</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <article className="rounded-xl border border-gray-200 dark:border-gray-800 bg-black/5 dark:bg-white/5 p-4">
+            <article className="rounded-xl border border-transparent bg-black/5 dark:bg-white/5 p-4 transition-transform hover:scale-[1.02]">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">Provider</h3>
               <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
                 {investigation.provider}
               </p>
             </article>
 
-            <article className="rounded-xl border border-gray-200 dark:border-gray-800 bg-black/5 dark:bg-white/5 p-4">
+            <article className="rounded-xl border border-transparent bg-black/5 dark:bg-white/5 p-4 transition-transform hover:scale-[1.02]">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">Model</h3>
               <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{investigation.model}</p>
             </article>
 
-            <article className="rounded-xl border border-gray-200 dark:border-gray-800 bg-black/5 dark:bg-white/5 p-4">
+            <article className="rounded-xl border border-transparent bg-black/5 dark:bg-white/5 p-4 transition-transform hover:scale-[1.02]">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">Investigation ID</h3>
               <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">#{investigation.id}</p>
             </article>
