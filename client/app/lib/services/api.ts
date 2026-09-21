@@ -47,6 +47,17 @@ type Investigation = {
   confidence: number;
   created_at: string;
 };
+
+export type IncidentResource = {
+  id: number;
+  incident_id: number;
+  tenant_id: number;
+  provider: string;
+  resource_type: string;
+  identifier: string;
+  created_at: string;
+};
+
 export type Incident = {
   tenant_id: number;
   id: number;
@@ -58,6 +69,7 @@ export type Incident = {
   assigned_to: number | null;
   created_at: string;
   updated_at: string;
+  resources: IncidentResource[];
 };
 
 export type Evidence = {
@@ -107,10 +119,17 @@ export type IncidentAudit = {
   details: string | null;
   created_at: string;
 };
+export type IncidentResourceCreate = {
+  provider: string;
+  resource_type: string;
+  identifier: string;
+};
+
 type CreateIncidentRequest = {
   title: string;
   description: string;
   severity: Incident["severity"];
+  resource?: IncidentResourceCreate;
 };
 type AssignIncidentRequest = {
   incidentId: number;
@@ -146,8 +165,6 @@ export type UpdateIntegrationRequest = {
 };
 
 export type GithubEvidenceRequest = {
-  owner: string;
-  repo: string;
   per_page?: number;
 };
 export const api = createApi({

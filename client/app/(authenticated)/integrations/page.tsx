@@ -13,6 +13,7 @@ import {
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import EditIntegrationModal from "./EditIntegrationModal";
 
 export default function IntegrationPage() {
   const [editingIntegrationId, setEditingIntegrationId] = useState<

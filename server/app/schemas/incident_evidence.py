@@ -26,6 +26,4 @@ class IncidentEvidenceResponse(BaseModel):
 
 
 class GithubEvidenceRequest(BaseModel):
-    owner: str = Field(min_length=1, max_length=100)
-    repo: str = Field(min_length=1, max_length=100)
     per_page: int = Field(default=10, ge=1, le=100)

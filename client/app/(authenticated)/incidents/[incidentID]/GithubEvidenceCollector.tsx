@@ -22,8 +22,6 @@ export default function GithubEvidenceCollector({
   incidentId,
 }: GithubEvidenceCollectorProps) {
   const [incidentIdState, setIncidentIdState] = useState("");
-  const [owner, setOwner] = useState("");
-  const [repo, setRepo] = useState("");
   const [perPage, setPerPage] = useState(10);
 
   const activeIncidentId = incidentId ?? (parseInt(incidentIdState) || 0);
@@ -44,16 +42,6 @@ export default function GithubEvidenceCollector({
   const validateForm = () => {
     if (!activeIncidentId) {
       setErrorMsg("Incident ID is required.");
-      return false;
-    }
-
-    if (!owner.trim()) {
-      setErrorMsg("GitHub owner is required.");
-      return false;
-    }
-
-    if (!repo.trim()) {
-      setErrorMsg("GitHub repository is required.");
       return false;
     }
 
@@ -91,8 +79,6 @@ export default function GithubEvidenceCollector({
       const result = await collectGithubEvidence({
         incidentId: activeIncidentId,
         body: {
-          owner: owner.trim(),
-          repo: repo.trim(),
           per_page: perPage,
         },
       }).unwrap();
@@ -120,8 +106,6 @@ export default function GithubEvidenceCollector({
       const result = await collectGithubDeploymentEvidence({
         incidentId: activeIncidentId,
         body: {
-          owner: owner.trim(),
-          repo: repo.trim(),
           per_page: perPage,
         },
       }).unwrap();
@@ -179,55 +163,7 @@ export default function GithubEvidenceCollector({
           </div>
         )}
 
-        <div className="grid gap-5 md:grid-cols-2">
-          {/* Owner Input */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="github-owner"
-              className="block text-sm font-semibold text-gray-700 dark:text-gray-300"
-            >
-              Owner
-            </label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                <UserCircleIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-              </div>
-              <input
-                id="github-owner"
-                type="text"
-                value={owner}
-                onChange={(event) => setOwner(event.target.value)}
-                placeholder="e.g. facebook"
-                disabled={isLoading}
-                className="block w-full rounded-xl border border-gray-200/60 bg-black/[0.03] py-2.5 pl-11 pr-4 text-sm text-black outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-black/50"
-              />
-            </div>
-          </div>
 
-          {/* Repo Input */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="github-repo"
-              className="block text-sm font-semibold text-gray-700 dark:text-gray-300"
-            >
-              Repository
-            </label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                <FolderIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-              </div>
-              <input
-                id="github-repo"
-                type="text"
-                value={repo}
-                onChange={(event) => setRepo(event.target.value)}
-                placeholder="e.g. react"
-                disabled={isLoading}
-                className="block w-full rounded-xl border border-gray-200/60 bg-black/[0.03] py-2.5 pl-11 pr-4 text-sm text-black outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-black/50"
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Per Page */}
         <div className="space-y-1.5 pt-1 border-t border-gray-200/50 dark:border-gray-800/50">

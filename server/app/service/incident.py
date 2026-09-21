@@ -23,6 +23,9 @@ from app.integration.github.exceptions import GithubIntegrationError
 from app.exception.integration import IntegrationConnectionError
 from app.ai.evidence_relationship_analyzer import EvidenceRelationshipAnalyzer
 from app.service.integration import IntegrationService
+from app.models.incident_resource import IncidentResource
+from app.schemas.incident import IncidentResourceCreate
+from app.repository.Incident_resource import IncidentResourceRepository
 
 ALLOWED_STATUS_TRANSITIONS = {
     IncidentStatus.OPEN: {
@@ -50,6 +53,7 @@ class IncidentService:
         self.evidence_repository = IncidentEvidenceRepository(db)
         self.investigation_repository = InvestigationRepository(db)
         self.integration_service = IntegrationService(db)
+        self.incident_resource_repository = IncidentResourceRepository(db)
 
     async def create_incident(
         self,
@@ -58,6 +62,7 @@ class IncidentService:
         title: str,
         description: str,
         severity: IncidentSeverity,
+        resource: IncidentResourceCreate | None = None,
     ) -> Incident:
         incident = Incident(
             tenant_id=tenant_id,
@@ -75,6 +80,16 @@ class IncidentService:
             old_value=None,
             new_value=None,
         )
+
+        if resource is not None:
+            incident_resource = IncidentResource(
+                incident_id=incident.id,
+                tenant_id=tenant_id,
+                provider=resource.provider,
+                resource_type=resource.resource_type,
+                identifier=resource.identifier,
+            )
+            await self.incident_resource_repository.create(incident_resource)
         await self.db.commit()
         return incident
 
@@ -424,6 +439,43 @@ class IncidentService:
             evidence_relationships=evidence_relationships,
         )
 
+    async def run_incident_investigation(
+        self, incident_id: int, current_user: User, per_page: int = 10
+    ) -> InvestigationResult:
+
+        incident = await self.get_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+
+        if current_user.role not in (UserRole.ADMIN, UserRole.INVESTIGATOR):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="you dont have permission to investigate this incident",
+            )
+
+        github_resource = next(
+            (
+                resource
+                for resource in incident.resources
+                if resource.provider == "github"
+                and resource.resource_type == "repository"
+            ),
+            None,
+        )
+        if github_resource is not None:
+            try:
+                await self.collect_github_evidence(
+                    incident_id=incident_id, per_page=per_page, current_user=current_user
+                )
+                await self.collect_github_deployment_evidence(
+                    incident_id=incident_id, per_page=per_page, current_user=current_user
+                )
+            except Exception as exc:
+                print(f"Warning: Failed to collect GitHub evidence prior to investigation: {exc}")
+        return await self.investigate_incident(
+            incident_id=incident_id, current_user=current_user
+        )
+
     async def investigate_incident(
         self,
         incident_id: int,
@@ -503,7 +555,7 @@ class IncidentService:
         return InvestigationResponse.model_validate(investigation)
 
     async def collect_github_evidence(
-        self, incident_id: int, owner: str, repo: str, per_page: int, current_user: User
+        self, incident_id: int, per_page: int, current_user: User
     ) -> list[IncidentEvidence]:
         incident = await self.get_incident(
             incident_id=incident_id, current_user=current_user
@@ -513,6 +565,30 @@ class IncidentService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="you dont have permission to collect evidence",
             )
+
+        github_resource = next(
+            (
+                resource
+                for resource in incident.resources
+                if resource.provider == "github"
+                and resource.resource_type == "repository"
+            ),
+            None,
+        )
+        if github_resource is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No GitHub repository is configured for this incident",
+            )
+
+        try:
+            owner, repo = github_resource.identifier.split("/", 1)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid GitHub repository identifier. Expected owner/repo",
+            )
+
         integration = await self.integration_service.get_integration_by_provider(
             provider="github",
             tenant_id=current_user.tenant_id,
@@ -600,7 +676,7 @@ class IncidentService:
         return created_evidence
 
     async def collect_github_deployment_evidence(
-        self, incident_id: int, owner: str, repo: str, per_page: int, current_user: User
+        self, incident_id: int, per_page: int, current_user: User
     ) -> list[IncidentEvidence]:
         incident = await self.get_incident(
             incident_id=incident_id,
@@ -612,6 +688,29 @@ class IncidentService:
                 detail="you dont have permission to collect evidence",
             )
 
+        github_resource = next(
+            (
+                resource
+                for resource in incident.resources
+                if resource.provider == "github"
+                and resource.resource_type == "repository"
+            ),
+            None,
+        )
+        if github_resource is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No GitHub repository is configured for this incident",
+            )
+
+        try:
+            owner, repo = github_resource.identifier.split("/", 1)
+
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid GitHub repository identifier. Expected owner/repo",
+            )
         integration = await self.integration_service.get_integration_by_provider(
             provider="github", tenant_id=current_user.tenant_id
         )

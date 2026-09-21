@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 from enum import Enum
@@ -58,4 +58,10 @@ class Incident(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
+    )
+    resources: Mapped[list["IncidentResource"]] = relationship(
+        "IncidentResource",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )

@@ -185,6 +185,30 @@ export default function IncidentHeader({
           {incident.description}
         </p>
       </div>
+
+      {/* Associated Resources */}
+      {incident.resources && incident.resources.length > 0 && (
+        <div className="mt-6 border-t border-gray-200/50 dark:border-gray-800/50 pt-6">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Associated Resources
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {incident.resources.map((res) => (
+              <div
+                key={res.id}
+                className="inline-flex flex-col rounded-lg border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-black/50 px-3 py-2 text-xs"
+              >
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  {res.provider} • {res.resource_type}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400 mt-1">
+                  {res.identifier}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

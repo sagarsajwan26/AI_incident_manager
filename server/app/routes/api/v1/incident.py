@@ -58,6 +58,7 @@ async def create_incident(
         title=data.title,
         description=data.description,
         severity=data.severity,
+        resource=data.resource,
     )
 
 
@@ -255,7 +256,7 @@ async def investigate_incident(
     incident_service = IncidentService(db=db, ai_service=ai_service)
 
     try:
-        return await incident_service.investigate_incident(
+        return await incident_service.run_incident_investigation(
             incident_id=incident_id, current_user=current_user
         )
     except AIInvestigationError as exc:
@@ -266,6 +267,7 @@ async def investigate_incident(
             AIInvalidResponseError,
             AIConfigurationError,
         )
+
         if isinstance(exc, AIProviderTimeoutError):
             raise HTTPException(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
@@ -295,8 +297,9 @@ async def investigate_incident(
         # Fallback for other integration errors
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="AI investigation failed",
+            detail=f"{exc.provider} integration unavailable: {exc.cause}",
         ) from exc
+
 
 @router.get(
     "/{incident_id}/investigations",
@@ -327,9 +330,9 @@ async def get_investigation(
     incident_service = IncidentService(db)
 
     return await incident_service.get_investigation(
-        incident_id=incident_id, 
-        investigation_id=investigation_id, 
-        current_user=current_user
+        incident_id=incident_id,
+        investigation_id=investigation_id,
+        current_user=current_user,
     )
 
 
@@ -346,8 +349,6 @@ async def collect_github_evidence(
     try:
         return await service.collect_github_evidence(
             incident_id=incident_id,
-            owner=request.owner,
-            repo=request.repo,
             per_page=request.per_page,
             current_user=current_user,
         )
@@ -410,8 +411,6 @@ async def collect_github_deployment_evidence(
 
     return await service.collect_github_deployment_evidence(
         incident_id=incident_id,
-        owner=request.owner,
-        repo=request.repo,
         per_page=request.per_page,
         current_user=current_user,
     )

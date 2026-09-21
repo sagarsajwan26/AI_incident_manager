@@ -55,7 +55,7 @@ class OllamaProvider(LLMProvider):
                 cause=exc,
             ) from exc
 
-        except (APIConnectionError, InternalServerError) as exc:
+        except Exception as exc:
             raise AIProviderUnavailableError(
                 provider="ollama",
                 cause=exc,
