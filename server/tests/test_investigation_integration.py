@@ -278,7 +278,7 @@ def test_commit_deployment_relationship_does_not_establish_root_cause():
     assert validated.root_cause_status == RootCauseStatus.UNKNOWN
 
     assert validated.likely_root_cause == (
-        "insufficient evidence to determine root cause"
+        "Insufficient evidence to determine root cause."
     )
 
     assert validated.confidence <= 0.49

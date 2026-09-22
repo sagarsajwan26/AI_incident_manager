@@ -15,6 +15,7 @@ from app.models.incident_evidence import IncidentEvidence
 from app.models.investigation import Investigation
 from app.models.integration import Integration
 from app.models.incident_resource import IncidentResource
+from app.models.incident_action import IncidentAction
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

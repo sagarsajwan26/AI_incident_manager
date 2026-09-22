@@ -46,7 +46,7 @@ def test_ai_service_missing_configuration(client, test_incident_id, auth_setup, 
     from app.service.incident import IncidentService as RealIncidentService
 
     class MockIncidentService(RealIncidentService):
-        def __init__(self, db):
+        def __init__(self, db, ai_service=None):
             super().__init__(db, ai_service=None)
 
     # Apply the monkeypatch to the route module

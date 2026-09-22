@@ -188,7 +188,12 @@ def test_collect_github_evidence_uses_correct_tenant_token(client, auth_tenant_1
     res = client.post("/incidents/", json={
         "title": "Tenant 1 Incident",
         "description": "This is a long description",
-        "severity": "low"
+        "severity": "low",
+        "resource": {
+            "provider": "github",
+            "resource_type": "repository",
+            "identifier": "test-owner/test-repo"
+        }
     })
     assert res.status_code == 200, res.text
     incident_id = res.json()["id"]
@@ -233,7 +238,12 @@ def test_collect_github_evidence_cross_tenant_rejection(client, auth_tenant_1, a
     res = client.post("/incidents/", json={
         "title": "Tenant 1 Incident",
         "description": "This is a long description",
-        "severity": "low"
+        "severity": "low",
+        "resource": {
+            "provider": "github",
+            "resource_type": "repository",
+            "identifier": "test-owner/test-repo"
+        }
     })
     incident_id = res.json()["id"]
 
@@ -258,7 +268,12 @@ def test_collect_github_evidence_missing_integration(client, auth_tenant_1):
     res = client.post("/incidents/", json={
         "title": "Tenant 1 Incident",
         "description": "This is a long description",
-        "severity": "low"
+        "severity": "low",
+        "resource": {
+            "provider": "github",
+            "resource_type": "repository",
+            "identifier": "test-owner/test-repo"
+        }
     })
     incident_id = res.json()["id"]
 
@@ -290,7 +305,12 @@ def test_collect_github_evidence_inactive_integration(client, auth_tenant_1):
     res = client.post("/incidents/", json={
         "title": "Tenant 1 Incident",
         "description": "This is a long description",
-        "severity": "low"
+        "severity": "low",
+        "resource": {
+            "provider": "github",
+            "resource_type": "repository",
+            "identifier": "test-owner/test-repo"
+        }
     })
     incident_id = res.json()["id"]
 
@@ -312,28 +332,13 @@ def test_collect_github_evidence_invalid_credentials(client, auth_tenant_1):
             client.delete(f"/integration/{it['id']}")
             
     client.cookies.update(auth_tenant_1)
-    client.post("/integration", json={
+    res = client.post("/integration", json={
         "provider": "github",
         "credentials": {"not_token": "something"},
         "is_active": True
     })
-
-    client.cookies.update(auth_tenant_1)
-    res = client.post("/incidents/", json={
-        "title": "Tenant 1 Incident",
-        "description": "This is a long description",
-        "severity": "low"
-    })
-    incident_id = res.json()["id"]
-
-    client.cookies.update(auth_tenant_1)
-    res = client.post(f"/incidents/{incident_id}/evidence/github", json={
-        "owner": "test-owner",
-        "repo": "test-repo",
-        "per_page": 10
-    })
     assert res.status_code == 400
-    assert "invalid" in res.json()["detail"].lower()
+    assert "token is required" in res.json()["detail"].lower()
 
 def test_collect_github_deployment_evidence_uses_correct_tenant_token(client, auth_tenant_1, auth_tenant_2):
     client.cookies.update(auth_tenant_1)
@@ -354,7 +359,12 @@ def test_collect_github_deployment_evidence_uses_correct_tenant_token(client, au
     res = client.post("/incidents/", json={
         "title": "Tenant 1 Incident",
         "description": "This is a long description",
-        "severity": "low"
+        "severity": "low",
+        "resource": {
+            "provider": "github",
+            "resource_type": "repository",
+            "identifier": "test-owner/test-repo"
+        }
     })
     incident_id = res.json()["id"]
 
@@ -411,7 +421,12 @@ def test_collect_github_evidence_rolls_back_on_failure(client, auth_tenant_1):
     res = client.post("/incidents/", json={
         "title": "Tenant 1 Incident",
         "description": "This is a long description",
-        "severity": "low"
+        "severity": "low",
+        "resource": {
+            "provider": "github",
+            "resource_type": "repository",
+            "identifier": "test-owner/test-repo"
+        }
     })
     incident_id = res.json()["id"]
 
@@ -493,7 +508,12 @@ def test_github_api_exception_mapping(client, auth_tenant_1, exception_class, ex
     res = client.post("/incidents/", json={
         "title": "Test Incident",
         "description": "Test description long enough",
-        "severity": "high"
+        "severity": "high",
+        "resource": {
+            "provider": "github",
+            "resource_type": "repository",
+            "identifier": "test-owner/test-repo"
+        }
     })
     incident_id = res.json()["id"]
 

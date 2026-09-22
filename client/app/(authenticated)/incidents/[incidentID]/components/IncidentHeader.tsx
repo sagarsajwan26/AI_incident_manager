@@ -34,12 +34,6 @@ const statusStyles: Record<Incident["status"], string> = {
     "bg-black/5 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 dark:bg-white/5",
 };
 
-const nextStatus: Partial<Record<Incident["status"], Incident["status"]>> = {
-  open: "investigating",
-  investigating: "contained",
-  contained: "resolved",
-  resolved: "closed",
-};
 export default function IncidentHeader({
   incident,
   isInvestigating,
@@ -73,7 +67,6 @@ export default function IncidentHeader({
       );
     }
   };
-  const next = nextStatus[incident.status];
 
   return (
     <header className="rounded-2xl glass-panel p-6 shadow-sm animate-fade-in-up">
@@ -125,11 +118,11 @@ export default function IncidentHeader({
                 incident.status.slice(1)}
             </option>
 
-            {next && (
-              <option value={next}>
-                {next.charAt(0).toUpperCase() + next.slice(1)}
+            {incident.available_transitions?.map((status) => (
+              <option key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </option>
-            )}
+            ))}
           </select>
 
           {/* Investigator selector */}

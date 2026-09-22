@@ -37,8 +37,18 @@ from app.service.ai_investigation import AIInvestigatorService
 from app.ai.ollama_provider import OllamaProvider
 from app.core.config import settings
 from app.schemas.incident_evidence import GithubEvidenceRequest
+from app.models.incident import Incident
+from app.schemas.incident_action import (
+    IncidentActionCreate,
+    IncidentActionResponse,
+)
 
 router = APIRouter()
+
+def _to_incident_response(service: IncidentService, incident: Incident, current_user: User) -> IncidentResponse:
+    response = IncidentResponse.model_validate(incident)
+    response.available_transitions = service.get_available_transitions(incident, current_user)
+    return response
 
 
 @router.post(
@@ -52,7 +62,7 @@ async def create_incident(
 ):
 
     service = IncidentService(db)
-    return await service.create_incident(
+    incident = await service.create_incident(
         tenant_id=current_user.tenant_id,
         reported_by=current_user.id,
         title=data.title,
@@ -60,14 +70,16 @@ async def create_incident(
         severity=data.severity,
         resource=data.resource,
     )
+    return _to_incident_response(service, incident, current_user)
 
 
 @router.get("/", response_model=list[IncidentResponse])
-async def get_incident(
+async def get_incidents(
     current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     service = IncidentService(db)
-    return await service.get_all_incident(current_user=current_user)
+    incidents = await service.get_all_incident(current_user=current_user)
+    return [_to_incident_response(service, inc, current_user) for inc in incidents]
 
 
 @router.get("/{incident_id}/audit", response_model=list[IncidentAuditResponse])
@@ -90,9 +102,10 @@ async def get_incident(
 ):
 
     service = IncidentService(db)
-    return await service.get_incident(
+    incident = await service.get_incident(
         incident_id=incident_id, current_user=current_user
     )
+    return _to_incident_response(service, incident, current_user)
 
 
 @router.patch("/{incident_id}/assign", response_model=IncidentResponse)
@@ -104,12 +117,13 @@ async def assign_incident(
 ):
     service = IncidentService(db)
 
-    return await service.assign_incident(
+    incident = await service.assign_incident(
         incident_id=incident_id,
         investigator_id=data.investigator_id,
         tenant_id=current_user.tenant_id,
         current_user=current_user,
     )
+    return _to_incident_response(service, incident, current_user)
 
 
 @router.patch("/{incident_id}/status", response_model=IncidentResponse)
@@ -120,12 +134,13 @@ async def update_incident_status(
     db: AsyncSession = Depends(get_db),
 ):
     service = IncidentService(db)
-    return await service.update_status(
+    incident = await service.update_status(
         incident_id=incident_id,
         new_status=data.status,
         tenant_id=current_user.tenant_id,
         current_user=current_user,
     )
+    return _to_incident_response(service, incident, current_user)
 
 
 @router.get("/{incident_id}/comments", response_model=list[IncidentCommentResponse])
@@ -412,5 +427,46 @@ async def collect_github_deployment_evidence(
     return await service.collect_github_deployment_evidence(
         incident_id=incident_id,
         per_page=request.per_page,
+        current_user=current_user,
+    )
+
+@router.post(
+    "/{incident_id}/actions",
+    response_model=IncidentActionResponse,
+)
+async def create_incident_action(
+    incident_id: int,
+    data: IncidentActionCreate,
+    current_user: User = Depends(
+        require_role(UserRole.ADMIN, UserRole.INVESTIGATOR)
+    ),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+
+    return await service.create_incident_action(
+        incident_id=incident_id,
+        current_user=current_user,
+        phase=data.phase,
+        action_type=data.action_type,
+        description=data.description,
+        outcome=data.outcome,
+    )
+
+@router.get(
+    "/{incident_id}/actions",
+    response_model=list[IncidentActionResponse],
+)
+async def get_incident_actions(
+    incident_id: int,
+    current_user: User = Depends(
+        require_role(UserRole.ADMIN, UserRole.INVESTIGATOR)
+    ),
+    db: AsyncSession = Depends(get_db),
+):
+    service = IncidentService(db)
+
+    return await service.get_incident_actions(
+        incident_id=incident_id,
         current_user=current_user,
     )

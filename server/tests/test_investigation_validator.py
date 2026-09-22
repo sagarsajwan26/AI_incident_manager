@@ -144,7 +144,7 @@ def test_unknown_stays_unknown(validator):
     
     assert validated.root_cause_status == RootCauseStatus.UNKNOWN
     assert validated.confidence <= 0.49
-    assert validated.likely_root_cause == "insufficient evidence to determine root cause"
+    assert validated.likely_root_cause == "Insufficient evidence to determine root cause."
 
 
 # 8. empty assessment        → unknown

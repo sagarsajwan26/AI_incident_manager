@@ -53,11 +53,14 @@ def client():
 
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(
-        app,
-        base_url="http://testserver/api/v1",
-        raise_server_exceptions=False,
-    ) as test_client:
-        yield test_client
+    from unittest.mock import patch
+    with patch("app.service.integration.IntegrationTestservice.test") as mock_test:
+        mock_test.return_value = None
+        with TestClient(
+            app,
+            base_url="http://testserver/api/v1",
+            raise_server_exceptions=False,
+        ) as test_client:
+            yield test_client
 
     app.dependency_overrides.clear()

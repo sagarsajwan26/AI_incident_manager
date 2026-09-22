@@ -64,7 +64,7 @@ def auth_setup(client):
     return {"email": email, "password": password}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_incident_id(client, auth_setup):
     response = client.post(
         "/incidents/",
@@ -171,3 +171,77 @@ def test_investigation_is_persisted(client, test_incident_id):
     assert "result" in investigation
     assert "confidence" in investigation
     assert "created_at" in investigation
+
+# ---------- ORCHESTRATION TESTS ----------
+
+from app.service.incident import IncidentService
+original_get_incident = IncidentService.get_incident
+from unittest.mock import AsyncMock
+
+def test_orchestration_github_resource_exists(client, test_incident_id):
+    fake_provider = FakeLLMProvider(json.dumps(valid_ai_response()))
+    
+    async def mock_get_incident(self, incident_id, current_user):
+        incident = await original_get_incident(self, incident_id, current_user)
+        from app.models.incident_resource import IncidentResource
+        if not any(r.provider == "github" for r in incident.resources):
+            incident.resources.append(IncidentResource(provider="github", resource_type="repository", identifier="owner/repo", tenant_id=current_user.tenant_id, incident_id=incident.id))
+        return incident
+
+    with patch("app.service.incident.IncidentService.get_incident", autospec=True, side_effect=mock_get_incident):
+        with patch("app.service.incident.IncidentService.collect_github_evidence", new_callable=AsyncMock) as mock_commits:
+            with patch("app.service.incident.IncidentService.collect_github_deployment_evidence", new_callable=AsyncMock) as mock_deploy:
+                with patch("app.routes.api.v1.incident.OllamaProvider", return_value=fake_provider):
+                    response = client.post(f"/incidents/{test_incident_id}/investigate")
+                    
+    assert response.status_code == 200, response.text
+    mock_commits.assert_awaited_once()
+    mock_deploy.assert_awaited_once()
+
+
+def test_orchestration_no_github_resource(client, test_incident_id):
+    fake_provider = FakeLLMProvider(json.dumps(valid_ai_response()))
+    
+    with patch("app.service.incident.IncidentService.collect_github_evidence", new_callable=AsyncMock) as mock_commits:
+        with patch("app.service.incident.IncidentService.collect_github_deployment_evidence", new_callable=AsyncMock) as mock_deploy:
+            with patch("app.routes.api.v1.incident.OllamaProvider", return_value=fake_provider):
+                response = client.post(f"/incidents/{test_incident_id}/investigate")
+                    
+    assert response.status_code == 200, response.text
+    mock_commits.assert_not_called()
+    mock_deploy.assert_not_called()
+
+
+def test_orchestration_github_collection_fails(client, test_incident_id):
+    fake_provider = FakeLLMProvider(json.dumps(valid_ai_response()))
+    
+    async def mock_get_incident(self, incident_id, current_user):
+        incident = await original_get_incident(self, incident_id, current_user)
+        from app.models.incident_resource import IncidentResource
+        if not any(r.provider == "github" for r in incident.resources):
+            incident.resources.append(IncidentResource(provider="github", resource_type="repository", identifier="owner/repo", tenant_id=current_user.tenant_id, incident_id=incident.id))
+        return incident
+
+    from app.exception.integration import IntegrationConnectionError
+    
+    with patch("app.service.incident.IncidentService.get_incident", autospec=True, side_effect=mock_get_incident):
+        with patch("app.service.incident.IncidentService.collect_github_evidence", new_callable=AsyncMock, side_effect=IntegrationConnectionError(provider="github", cause=Exception("failed"))):
+            with patch("app.routes.api.v1.incident.OllamaProvider", return_value=fake_provider) as mock_ai:
+                response = client.post(f"/incidents/{test_incident_id}/investigate")
+                    
+    assert response.status_code == 502, response.text
+
+
+def test_orchestration_permission_unauthorized(client, test_incident_id):
+    fake_provider = FakeLLMProvider(json.dumps(valid_ai_response()))
+    
+    async def mock_get_incident(self, incident_id, current_user):
+        from app.models.user import UserRole
+        current_user.role = UserRole.MEMBER
+        return await original_get_incident(self, incident_id, current_user)
+
+    with patch("app.service.incident.IncidentService.get_incident", autospec=True, side_effect=mock_get_incident):
+        with patch("app.routes.api.v1.incident.OllamaProvider", return_value=fake_provider):
+            response = client.post(f"/incidents/{test_incident_id}/investigate")
+            
+    assert response.status_code == 403, response.text

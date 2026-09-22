@@ -130,6 +130,10 @@ async def test_integration(
         integration = await service.test_integration(
             integration_id=integration_id, tenant_id=current_user.tenant_id
         )
+        if integration is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="missing the integration"
+            )
 
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

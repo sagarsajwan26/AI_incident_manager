@@ -42,7 +42,7 @@ export default function SignupPage() {
     } catch (error: unknown) {
       const apiError = error as {
         data?: {
-          detail?: string;
+          detail?: string | Array<{ msg: string }>;
         };
       };
 

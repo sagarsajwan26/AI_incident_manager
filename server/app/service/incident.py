@@ -26,16 +26,26 @@ from app.service.integration import IntegrationService
 from app.models.incident_resource import IncidentResource
 from app.schemas.incident import IncidentResourceCreate
 from app.repository.Incident_resource import IncidentResourceRepository
+from app.repository.incident_action import IncidentActionRepository
+from app.models.incident_action import IncidentAction, IncidentActionPhase
 
 ALLOWED_STATUS_TRANSITIONS = {
     IncidentStatus.OPEN: {
         IncidentStatus.INVESTIGATING,
+        IncidentStatus.RESOLVED,
     },
     IncidentStatus.INVESTIGATING: {
         IncidentStatus.CONTAINED,
+        IncidentStatus.RESOLVED,
     },
-    IncidentStatus.CONTAINED: {IncidentStatus.RESOLVED},
-    IncidentStatus.RESOLVED: {IncidentStatus.CLOSED},
+    IncidentStatus.CONTAINED: {
+        IncidentStatus.INVESTIGATING,
+        IncidentStatus.RESOLVED,
+    },
+    IncidentStatus.RESOLVED: {
+        IncidentStatus.INVESTIGATING,
+        IncidentStatus.CLOSED,
+    },
     IncidentStatus.CLOSED: set(),
 }
 
@@ -54,6 +64,21 @@ class IncidentService:
         self.investigation_repository = InvestigationRepository(db)
         self.integration_service = IntegrationService(db)
         self.incident_resource_repository = IncidentResourceRepository(db)
+        self.incident_action_repository = IncidentActionRepository(db)
+
+    def get_available_transitions(
+        self,
+        incident: Incident,
+        current_user: User,
+    ) -> list[IncidentStatus]:
+        transitions = ALLOWED_STATUS_TRANSITIONS[incident.status]
+
+        if current_user.role == UserRole.INVESTIGATOR:
+            transitions = {
+                status for status in transitions if status != IncidentStatus.CLOSED
+            }
+
+        return list(transitions)
 
     async def create_incident(
         self,
@@ -463,15 +488,12 @@ class IncidentService:
             None,
         )
         if github_resource is not None:
-            try:
-                await self.collect_github_evidence(
-                    incident_id=incident_id, per_page=per_page, current_user=current_user
-                )
-                await self.collect_github_deployment_evidence(
-                    incident_id=incident_id, per_page=per_page, current_user=current_user
-                )
-            except Exception as exc:
-                print(f"Warning: Failed to collect GitHub evidence prior to investigation: {exc}")
+            await self.collect_github_evidence(
+                incident_id=incident_id, per_page=per_page, current_user=current_user
+            )
+            await self.collect_github_deployment_evidence(
+                incident_id=incident_id, per_page=per_page, current_user=current_user
+            )
         return await self.investigate_incident(
             incident_id=incident_id, current_user=current_user
         )
@@ -789,8 +811,64 @@ class IncidentService:
                 performed_by=current_user.id,
                 action="EVIDENCE_ADDED",
                 old_value=None,
-                new_value=(f"github deployment " f"{deployment['deployment_id']}"),
+                new_value=f"github deployment {deployment['deployment_id']}",
             )
 
         await self.db.commit()
         return created_evidence
+
+    async def create_incident_action(
+        self,
+        incident_id: int,
+        current_user: User,
+        phase: IncidentActionPhase,
+        action_type: str,
+        description: str,
+        outcome: str | None = None,
+    ) -> IncidentAction:
+        incident = await self.get_incident(incident_id, current_user)
+        
+        if phase == IncidentActionPhase.CLOSURE:
+            if current_user.role != UserRole.ADMIN:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Only admins can create closure actions"
+                )
+            if incident.status != IncidentStatus.RESOLVED:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Closure actions can only be created for resolved incidents"
+                )
+                
+        action = IncidentAction(
+            incident_id=incident.id,
+            tenant_id=current_user.tenant_id,
+            performed_by=current_user.id,
+            phase=phase,
+            action_type=action_type,
+            description=description,
+            outcome=outcome,
+        )
+        action = await self.incident_action_repository.create(action)
+        
+        await self.audit_repository.create(
+            tenant_id=current_user.tenant_id,
+            incident_id=incident.id,
+            performed_by=current_user.id,
+            action="ACTION_ADDED",
+            old_value=None,
+            new_value=f"{phase.value}: {action_type}",
+        )
+        await self.db.commit()
+        return action
+
+    async def get_incident_actions(
+        self,
+        incident_id: int,
+        current_user: User,
+    ) -> list[IncidentAction]:
+        incident = await self.get_incident(incident_id, current_user)
+        return await self.incident_action_repository.get_by_incident(
+            incident_id=incident.id,
+            tenant_id=current_user.tenant_id
+        )

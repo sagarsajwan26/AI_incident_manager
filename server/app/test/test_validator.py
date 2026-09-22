@@ -1,103 +1,136 @@
+import pytest
 from app.schemas.ai_investigation import (
     InvestigationResult,
     RootCauseStatus,
+    EvidenceSupport,
+    EvidenceAssessment,
 )
+from app.ai.investigation_validator import InvestigationValidator
 
 
-class InvestigationValidator:
+@pytest.fixture
+def base_result():
+    return InvestigationResult(
+        summary="Test summary",
+        likely_root_cause="Test root cause",
+        root_cause_status=RootCauseStatus.CONFIRMED,
+        evidence=[],
+        evidence_assessment=[],
+        impact="Test impact",
+        recommended_actions=[],
+        unknowns=[],
+        confidence=0.96, # Starting with a high confidence to test clamping
+    )
 
-    def validate(
-        self,
-        result: InvestigationResult,
-    ) -> InvestigationResult:
-
-        if result.root_cause_status == RootCauseStatus.CONFIRMED:
-            self._validate_confirmed(result)
-
-        elif result.root_cause_status == RootCauseStatus.PROBABLE:
-            self._validate_probable(result)
-
-        elif result.root_cause_status == RootCauseStatus.UNKNOWN:
-            self._validate_unknown(result)
-
-        return result
-
-    def _validate_confirmed(
-        self,
-        result: InvestigationResult,
-    ) -> None:
-
-        directly_supported = any(
-            assessment.is_direct and assessment.supports_root_cause
-            for assessment in result.evidence_assessment
+def test_confirmed_direct_support(base_result):
+    validator = InvestigationValidator()
+    base_result.root_cause_status = RootCauseStatus.CONFIRMED
+    base_result.confidence = 0.50 # Low confidence to test it being bumped
+    base_result.evidence_assessment = [
+        EvidenceAssessment(
+            claim="Claim",
+            support="Support",
+            supports_root_cause=True,
+            support_level=EvidenceSupport.DIRECT
         )
+    ]
+    
+    result = validator.validate(base_result)
+    
+    assert result.root_cause_status == RootCauseStatus.CONFIRMED
+    assert result.confidence >= 0.85
 
-        if directly_supported:
-            result.confidence = max(result.confidence, 0.85)
-            return
-
-        indirectly_supported = any(
-            assessment.supports_root_cause for assessment in result.evidence_assessment
+def test_confirmed_inferred_support(base_result):
+    validator = InvestigationValidator()
+    base_result.root_cause_status = RootCauseStatus.CONFIRMED
+    base_result.evidence_assessment = [
+        EvidenceAssessment(
+            claim="Claim",
+            support="Support",
+            supports_root_cause=True,
+            support_level=EvidenceSupport.INFERRED
         )
+    ]
+    
+    result = validator.validate(base_result)
+    
+    assert result.root_cause_status == RootCauseStatus.PROBABLE
+    assert result.confidence <= 0.84
 
-        if indirectly_supported:
-            self._mark_probable(result)
-            return
-
-        self._mark_unknown(result)
-
-    def _validate_probable(
-        self,
-        result: InvestigationResult,
-    ) -> None:
-
-        supported = any(
-            assessment.supports_root_cause for assessment in result.evidence_assessment
+def test_confirmed_no_support(base_result):
+    validator = InvestigationValidator()
+    base_result.root_cause_status = RootCauseStatus.CONFIRMED
+    base_result.evidence_assessment = [
+        EvidenceAssessment(
+            claim="Claim",
+            support="Support",
+            supports_root_cause=False,
+            support_level=EvidenceSupport.DIRECT
+        ),
+        EvidenceAssessment(
+            claim="Claim 2",
+            support="Support 2",
+            supports_root_cause=True,
+            support_level=EvidenceSupport.UNSUPPORTED
         )
+    ]
+    
+    result = validator.validate(base_result)
+    
+    assert result.root_cause_status == RootCauseStatus.UNKNOWN
+    assert result.confidence <= 0.49
+    assert result.likely_root_cause == "Insufficient evidence to determine root cause."
 
-        if not supported:
-            self._mark_unknown(result)
-            return
-
-        result.confidence = min(result.confidence, 0.84)
-
-    def _validate_unknown(
-        self,
-        result: InvestigationResult,
-    ) -> None:
-
-        result.confidence = min(result.confidence, 0.49)
-
-        result.likely_root_cause = "Insufficient evidence to determine root cause."
-
-    def _mark_probable(
-        self,
-        result: InvestigationResult,
-    ) -> None:
-
-        result.root_cause_status = RootCauseStatus.PROBABLE
-        result.confidence = min(result.confidence, 0.84)
-
-        if result.unknowns is None:
-            result.unknowns = []
-
-        result.unknowns.append(
-            "The evidence suggests the root cause, "
-            "but the causal relationship is not directly established."
+def test_probable_direct_or_inferred_support(base_result):
+    validator = InvestigationValidator()
+    base_result.root_cause_status = RootCauseStatus.PROBABLE
+    base_result.confidence = 0.96
+    base_result.evidence_assessment = [
+        EvidenceAssessment(
+            claim="Claim",
+            support="Support",
+            supports_root_cause=True,
+            support_level=EvidenceSupport.INFERRED
         )
+    ]
+    
+    result = validator.validate(base_result)
+    
+    assert result.root_cause_status == RootCauseStatus.PROBABLE
+    assert result.confidence <= 0.84
 
-    def _mark_unknown(
-        self,
-        result: InvestigationResult,
-    ) -> None:
-
-        result.root_cause_status = RootCauseStatus.UNKNOWN
-        result.likely_root_cause = "Insufficient evidence to determine root cause."
-        result.confidence = min(result.confidence, 0.49)
-
-        if result.unknowns is None:
-            result.unknowns = []
-
-        result.unknowns.append(
-            "The supplied evidence does not directly establish " "the root cause."
+def test_probable_no_support(base_result):
+    validator = InvestigationValidator()
+    base_result.root_cause_status = RootCauseStatus.PROBABLE
+    base_result.evidence_assessment = [
+        EvidenceAssessment(
+            claim="Claim",
+            support="Support",
+            supports_root_cause=False,
+            support_level=EvidenceSupport.INFERRED
         )
+    ]
+    
+    result = validator.validate(base_result)
+    
+    assert result.root_cause_status == RootCauseStatus.UNKNOWN
+    assert result.confidence <= 0.49
+    assert result.likely_root_cause == "Insufficient evidence to determine root cause."
+
+def test_unknown(base_result):
+    validator = InvestigationValidator()
+    base_result.root_cause_status = RootCauseStatus.UNKNOWN
+    base_result.evidence_assessment = [
+        EvidenceAssessment(
+            claim="Claim",
+            support="Support",
+            supports_root_cause=False,
+            support_level=EvidenceSupport.UNSUPPORTED
+        )
+    ]
+    
+    result = validator.validate(base_result)
+    
+    assert result.root_cause_status == RootCauseStatus.UNKNOWN
+    assert result.confidence <= 0.49
+    assert result.likely_root_cause == "Insufficient evidence to determine root cause."

@@ -29,7 +29,7 @@ export default function Login() {
     } catch (error) {
       const apiError = error as {
         data?: {
-          detail?: string;
+          detail?: string | Array<{ msg: string }>;
         };
       };
 

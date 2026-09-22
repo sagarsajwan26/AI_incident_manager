@@ -15,6 +15,13 @@ async def test_collect_github_evidence_integration_error_translation():
     # Mock get_incident
     mock_incident = AsyncMock()
     mock_incident.id = 1
+    
+    mock_resource = AsyncMock()
+    mock_resource.provider = "github"
+    mock_resource.resource_type = "repository"
+    mock_resource.identifier = "owner/repo"
+    mock_incident.resources = [mock_resource]
+    
     service.get_incident = AsyncMock(return_value=mock_incident)
     
     # Mock integration service
@@ -32,8 +39,6 @@ async def test_collect_github_evidence_integration_error_translation():
         with pytest.raises(IntegrationConnectionError) as exc_info:
             await service.collect_github_evidence(
                 incident_id=1,
-                owner="owner",
-                repo="repo",
                 per_page=10,
                 current_user=current_user
             )

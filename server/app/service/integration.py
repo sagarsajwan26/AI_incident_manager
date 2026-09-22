@@ -92,6 +92,9 @@ class IntegrationService:
         )
 
         if integration is None:
+            return None
+
+        if not integration.is_active:
             raise ValueError("Integration is inactive")
 
         token = integration.credentials.get("token")

@@ -40,6 +40,7 @@ class IncidentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     resources: list[IncidentResourceResponse] = Field(default_factory=list)
+    available_transitions: list[IncidentStatus] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 

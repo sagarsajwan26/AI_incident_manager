@@ -70,6 +70,7 @@ export type Incident = {
   created_at: string;
   updated_at: string;
   resources: IncidentResource[];
+  available_transitions: ("open" | "investigating" | "contained" | "resolved" | "closed")[];
 };
 
 export type Evidence = {

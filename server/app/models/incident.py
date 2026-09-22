@@ -65,3 +65,9 @@ class Incident(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    actions: Mapped[list["IncidentAction"]] = relationship(
+        "IncidentAction",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
