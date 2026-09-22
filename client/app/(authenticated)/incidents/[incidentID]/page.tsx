@@ -15,7 +15,8 @@ import EvidenceSection from "./components/EvidenceSection";
 import { InvestigationHistory } from "./components/InvestigationHistory";
 import AuditTimeline from "./components/AuditTimeline";
 import GithubEvidenceCollector from "./GithubEvidenceCollector";
-
+import OperationalActions from "./OperationalActions";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 export default function IncidentDetailPage() {
   const params = useParams();
   const incidentId = Number(params.incidentID);
@@ -113,15 +114,10 @@ export default function IncidentDetailPage() {
       {isStatusError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/20 dark:bg-red-500/10">
           <p className="text-sm font-medium text-red-600 dark:text-red-400">
-            {typeof statusError === "object" &&
-            statusError !== null &&
-            "data" in statusError &&
-            typeof statusError.data === "object" &&
-            statusError.data !== null &&
-            "detail" in statusError.data &&
-            typeof statusError.data.detail === "string"
-              ? statusError.data.detail
-              : "Failed to update incident status. Please try again."}
+            {getApiErrorMessage(
+              statusError,
+              "Failed to update incident status. Please try again.",
+            )}
           </p>
         </div>
       )}
@@ -179,6 +175,10 @@ export default function IncidentDetailPage() {
       </div>
       <CommentsSection incidentId={incidentId} />
       <AuditTimeline incidentId={incidentId} />
+      <OperationalActions
+        incidentId={incident.id}
+        incidentStatus={incident.status}
+      />
     </main>
   );
 }

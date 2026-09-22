@@ -70,7 +70,13 @@ export type Incident = {
   created_at: string;
   updated_at: string;
   resources: IncidentResource[];
-  available_transitions: ("open" | "investigating" | "contained" | "resolved" | "closed")[];
+  available_transitions: (
+    | "open"
+    | "investigating"
+    | "contained"
+    | "resolved"
+    | "closed"
+  )[];
 };
 
 export type Evidence = {
@@ -168,6 +174,20 @@ export type UpdateIntegrationRequest = {
 export type GithubEvidenceRequest = {
   per_page?: number;
 };
+
+export type IncidentActionPhase = "containment" | "resolution" | "closure";
+export interface IncidentAction {
+  id: number;
+  incident_id: number;
+  tenant_id: number;
+  performed_by: number;
+  phase: IncidentActionPhase;
+  action_type: string;
+  description: string;
+  outcome: string | null;
+  created_at: string;
+}
+
 export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
@@ -183,6 +203,7 @@ export const api = createApi({
     "Audit",
     "User",
     "Integration",
+    "IncidentAction",
   ],
   endpoints: (builder) => ({
     register: builder.mutation<RegisterResponse, RegisterRequest>({
@@ -451,6 +472,33 @@ export const api = createApi({
         { type: "Evidence", id: incidentId },
       ],
     }),
+
+    getIncidentActions: builder.query<IncidentAction[], number>({
+      query: (incidentId) => `/api/v1/incidents/${incidentId}/actions`,
+      providesTags: (_result, _error, incidentId) => [
+        { type: "IncidentAction", id: `LIST-${incidentId}` },
+      ],
+    }),
+
+    createIncidentAction: builder.mutation<
+      IncidentAction,
+      {
+        incidentId: number;
+        phase: IncidentActionPhase;
+        action_type: string;
+        description: string;
+        outcome?: string | null;
+      }
+    >({
+      query: ({ incidentId, ...body }) => ({
+        url: `/api/v1/incidents/${incidentId}/actions`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { incidentId }) => [
+        { type: "IncidentAction", id: `LIST-${incidentId}` },
+      ],
+    }),
   }),
 });
 
@@ -483,4 +531,6 @@ export const {
   useTestIntegrationMutation,
   useCollectGithubDeploymentEvidenceMutation,
   useCollectGithubEvidenceMutation,
+  useGetIncidentActionsQuery,
+  useCreateIncidentActionMutation,
 } = api;
