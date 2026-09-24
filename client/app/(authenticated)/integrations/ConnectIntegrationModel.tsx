@@ -3,6 +3,7 @@ import {
   type IntegrationProvider,
   useCreateIntegrationMutation,
 } from "@/app/lib/services/api";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
@@ -18,6 +19,7 @@ export default function ConnectIntegrationmodel({
 }: ConnectIntegrationProps) {
   const [provider, setProvider] = useState<IntegrationProvider>("github");
   const [token, setToken] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [createIntegration, { isLoading }] = useCreateIntegrationMutation();
   if (!isOpen) {
@@ -27,6 +29,7 @@ export default function ConnectIntegrationmodel({
   const handleClose = () => {
     setErrorMsg("");
     setToken("");
+    setWebhookSecret("");
     setProvider("github");
     onClose();
   };
@@ -40,20 +43,13 @@ export default function ConnectIntegrationmodel({
         credentials: {
           token,
         },
+        webhook_secret: webhookSecret || undefined,
         is_active: true,
       }).unwrap();
 
       handleClose();
-    } catch (error: any) {
-      console.error("Failed to create integration:", error);
-      const detail = error?.data?.detail;
-      let msg = "Failed to connect integration. Please check your token.";
-      if (typeof detail === "string") {
-        msg = detail;
-      } else if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) {
-        msg = detail[0].msg;
-      }
-      setErrorMsg(msg);
+    } catch (error) {
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
   return (
@@ -125,6 +121,24 @@ export default function ConnectIntegrationmodel({
               onChange={(event) => setToken(event.target.value)}
               placeholder="Enter your access token"
               required
+              className="w-full rounded-xl border border-transparent bg-black/5 dark:bg-white/5 px-4 py-3 text-sm text-black dark:text-white placeholder:text-gray-400 outline-none transition focus:border-gray-300 dark:focus:border-gray-700"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="webhookSecret"
+              className="mb-2 block text-sm font-medium text-black dark:text-gray-300"
+            >
+              Webhook Secret (Important: Must match GitHub settings)
+            </label>
+
+            <input
+              id="webhookSecret"
+              type="password"
+              value={webhookSecret}
+              onChange={(event) => setWebhookSecret(event.target.value)}
+              placeholder="Enter your webhook secret"
               className="w-full rounded-xl border border-transparent bg-black/5 dark:bg-white/5 px-4 py-3 text-sm text-black dark:text-white placeholder:text-gray-400 outline-none transition focus:border-gray-300 dark:focus:border-gray-700"
             />
           </div>

@@ -6,6 +6,7 @@ import {
   useTestIntegrationMutation,
   useDeleteIntegrationMutation,
 } from "@/app/lib/services/api";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 import IntegrationCard from "./IntegrationCard";
 import {
   PlusIcon,
@@ -53,11 +54,12 @@ export default function IntegrationPage() {
 
       setTimeout(() => setTestResult(null), 3000);
     } catch (error) {
-      console.error("Integration test failed:", error);
-
       setTestResult({
         type: "error",
-        message: "Connection test failed. Please check credentials.",
+        message: getApiErrorMessage(
+          error,
+          "Connection test failed. Please check credentials.",
+        ),
       });
 
       setTimeout(() => setTestResult(null), 5000);
@@ -80,7 +82,11 @@ export default function IntegrationPage() {
 
       await deleteIntegration(integrationId).unwrap();
     } catch (error) {
-      console.error("Failed to delete integration:", error);
+      setTestResult({
+        type: "error",
+        message: getApiErrorMessage(error, "Failed to delete integration."),
+      });
+      setTimeout(() => setTestResult(null), 5000);
     } finally {
       setDeletingIntegrationId(null);
     }

@@ -16,7 +16,7 @@ from app.models.investigation import Investigation
 from app.models.integration import Integration
 from app.models.incident_resource import IncidentResource
 from app.models.incident_action import IncidentAction
-
+from app.models.incident_automation_job import IncidentAutomationJob
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

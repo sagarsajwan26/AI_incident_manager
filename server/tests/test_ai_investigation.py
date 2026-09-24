@@ -1,3 +1,4 @@
+from app.core.config import settings
 import json
 from datetime import datetime, timezone
 
@@ -293,6 +294,7 @@ async def test_ollama_provider_maps_internal_server_error_to_ai_unavailable():
 
 @pytest.mark.asyncio
 async def test_openai_provider_maps_timeout_to_ai_timeout():
+    settings.openai_api_key = 'fake'
     provider = OpenAIProvider()
     provider.client.responses.create = AsyncMock(
         side_effect=APITimeoutError(request=None)
@@ -304,6 +306,7 @@ async def test_openai_provider_maps_timeout_to_ai_timeout():
 
 @pytest.mark.asyncio
 async def test_openai_provider_maps_connection_error_to_ai_unavailable():
+    settings.openai_api_key = 'fake'
     provider = OpenAIProvider()
     provider.client.responses.create = AsyncMock(
         side_effect=APIConnectionError(request=None)
@@ -315,6 +318,7 @@ async def test_openai_provider_maps_connection_error_to_ai_unavailable():
 
 @pytest.mark.asyncio
 async def test_openai_provider_maps_internal_server_error_to_ai_unavailable():
+    settings.openai_api_key = 'fake'
     provider = OpenAIProvider()
     provider.client.responses.create = AsyncMock(
         side_effect=InternalServerError(

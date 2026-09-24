@@ -45,9 +45,14 @@ from app.schemas.incident_action import (
 
 router = APIRouter()
 
-def _to_incident_response(service: IncidentService, incident: Incident, current_user: User) -> IncidentResponse:
+
+def _to_incident_response(
+    service: IncidentService, incident: Incident, current_user: User
+) -> IncidentResponse:
     response = IncidentResponse.model_validate(incident)
-    response.available_transitions = service.get_available_transitions(incident, current_user)
+    response.available_transitions = service.get_available_transitions(
+        incident, current_user
+    )
     return response
 
 
@@ -120,7 +125,6 @@ async def assign_incident(
     incident = await service.assign_incident(
         incident_id=incident_id,
         investigator_id=data.investigator_id,
-        tenant_id=current_user.tenant_id,
         current_user=current_user,
     )
     return _to_incident_response(service, incident, current_user)
@@ -137,7 +141,6 @@ async def update_incident_status(
     incident = await service.update_status(
         incident_id=incident_id,
         new_status=data.status,
-        tenant_id=current_user.tenant_id,
         current_user=current_user,
     )
     return _to_incident_response(service, incident, current_user)
@@ -423,12 +426,56 @@ async def collect_github_deployment_evidence(
     db: AsyncSession = Depends(get_db),
 ):
     service = IncidentService(db)
+    try:
 
-    return await service.collect_github_deployment_evidence(
-        incident_id=incident_id,
-        per_page=request.per_page,
-        current_user=current_user,
-    )
+        return await service.collect_github_deployment_evidence(
+            incident_id=incident_id,
+            per_page=request.per_page,
+            current_user=current_user,
+        )
+    except IntegrationConnectionError as exc:
+        cause = exc.cause
+        if isinstance(cause, GithubAuthenticationError):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Github authentication failed",
+            ) from exc
+
+        if isinstance(cause, GithubUpstreamError):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Github denied the access to the requested resource",
+            ) from exc
+
+        if isinstance(cause, GithubNotFoundError):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="GitHub repository or resource was not found",
+            ) from exc
+
+        if isinstance(cause, GithubRateLimitError):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="GitHub API rate limit exceeded",
+            ) from exc
+
+        if isinstance(cause, GithubTimeoutError):
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="GitHub API request timed out",
+            ) from exc
+
+        if isinstance(cause, GithubUpstreamError):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="GitHub API is currently unavailable",
+            ) from exc
+
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="GitHub integration request failed",
+        ) from exc
+
 
 @router.post(
     "/{incident_id}/actions",
@@ -437,9 +484,7 @@ async def collect_github_deployment_evidence(
 async def create_incident_action(
     incident_id: int,
     data: IncidentActionCreate,
-    current_user: User = Depends(
-        require_role(UserRole.ADMIN, UserRole.INVESTIGATOR)
-    ),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.INVESTIGATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     service = IncidentService(db)
@@ -453,15 +498,14 @@ async def create_incident_action(
         outcome=data.outcome,
     )
 
+
 @router.get(
     "/{incident_id}/actions",
     response_model=list[IncidentActionResponse],
 )
 async def get_incident_actions(
     incident_id: int,
-    current_user: User = Depends(
-        require_role(UserRole.ADMIN, UserRole.INVESTIGATOR)
-    ),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.INVESTIGATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     service = IncidentService(db)

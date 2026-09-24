@@ -7,6 +7,7 @@ import {
   useGetIncidentCommentsQuery,
   useUpdateIncidentCommentMutation,
 } from "@/app/lib/services/api";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 type CommentsSectionProps = {
   incidentId: number;
 };
@@ -25,6 +26,9 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
     useDeleteIncidentCommentMutation();
   const [updateIncidentComment, { isLoading: isUpdatingComment }] =
     useUpdateIncidentCommentMutation();
+
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const handleAddComment = async () => {
     const trimmedComment = comment.trim();
 
@@ -33,13 +37,14 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
     }
 
     try {
+      setErrorMsg(null);
       await addIncidentComment({
         incidentId,
         content: trimmedComment,
       }).unwrap();
       setComment("");
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
   const handleEditComment = async (commentId: number) => {
@@ -48,6 +53,7 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
       return;
     }
     try {
+      setErrorMsg(null);
       await updateIncidentComment({
         incidentId,
         commentId,
@@ -56,7 +62,7 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
       setEditingCommentId(null);
       setEditingContent("");
     } catch (error) {
-      console.error("Failed to update comment:", error);
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
   const handleDeleteComment = async (commentId: number) => {
@@ -68,12 +74,13 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
     }
 
     try {
+      setErrorMsg(null);
       await deleteIncidentComment({
         incidentId,
         commentId,
       }).unwrap();
     } catch (error) {
-      console.error("Failed to delete comment:", error);
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
 
@@ -88,6 +95,12 @@ export default function CommentsSection({ incidentId }: CommentsSectionProps) {
           Investigation discussion and incident updates.
         </p>
       </div>
+
+      {errorMsg && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-sm text-red-600">{errorMsg}</p>
+        </div>
+      )}
 
       {/* Comments list */}
       <div className="space-y-4">

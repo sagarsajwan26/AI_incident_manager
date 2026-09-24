@@ -4,6 +4,7 @@ import {
   useGetIntegrationQuery,
   useUpdateIntegrationMutation,
 } from "@/app/lib/services/api";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
@@ -79,16 +80,8 @@ export default function EditIntegrationModal({
       setTimeout(() => {
         handleClose();
       }, 800);
-    } catch (error: any) {
-      console.error("Failed to update integration:", error);
-      const detail = error?.data?.detail;
-      let message = "Failed to update integration.";
-      if (typeof detail === "string") {
-        message = detail;
-      } else if (Array.isArray(detail) && detail.length > 0 && detail[0]?.msg) {
-        message = detail[0].msg;
-      }
-      setErrorMsg(message);
+    } catch (error) {
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
   return (

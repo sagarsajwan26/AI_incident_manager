@@ -38,7 +38,7 @@ export default function IncidentDetailPage() {
     try {
       await investigateIncident(incidentId).unwrap();
     } catch (error) {
-      console.error("Investigation failed:", error);
+      // Handled by isInvestigationError state
     }
   };
 
@@ -54,7 +54,7 @@ export default function IncidentDetailPage() {
         status: newStatus,
       }).unwrap();
     } catch (error) {
-      console.error("Failed to update incident status:", error);
+      // Handled by isStatusError state
     }
   };
 

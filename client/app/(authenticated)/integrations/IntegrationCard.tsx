@@ -1,7 +1,8 @@
 "use client";
 
 import type { Integration } from "@/app/lib/services/api";
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { useMeQuery } from "@/app/lib/services/api";
+import { PencilIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 
 type IntegrationCardProps = {
   integration: Integration;
@@ -20,6 +21,13 @@ export default function IntegrationCard({
   isDeleting = false,
   onEdit,
 }: IntegrationCardProps) {
+  const { data: user } = useMeQuery();
+  
+  const webhookUrl =
+    integration.provider === "github" && user?.tenant_id
+      ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/github-webhook/${user.tenant_id}`
+      : null;
+
   return (
     <div className="group relative overflow-hidden rounded-2xl glass-panel p-6 shadow-sm transition-transform hover:scale-[1.02]">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -64,6 +72,25 @@ export default function IntegrationCard({
             )}
           </span>
         </div>
+
+        {webhookUrl && (
+          <div className="mt-4 rounded-xl bg-black/5 p-4 dark:bg-white/5">
+            <div className="mb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+              Payload URL (for GitHub Settings)
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <code className="truncate text-sm text-black dark:text-white">{webhookUrl}</code>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(webhookUrl)}
+                className="rounded p-1.5 text-gray-500 hover:bg-black/5 hover:text-black dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white transition"
+                title="Copy URL"
+              >
+                <ClipboardDocumentIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-200/50 pt-4 dark:border-gray-800/50">
           <button

@@ -4,6 +4,7 @@ import {
   useAddIncidentEvidenceMutation,
   useGetIncidentEvidenceQuery,
 } from "@/app/lib/services/api";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 
 type EvidenceSectionProps = {
   incidentId: number;
@@ -12,6 +13,7 @@ type EvidenceSectionProps = {
 const EvidenceSection = ({ incidentId }: EvidenceSectionProps) => {
   const [evidenceType, setEvidenceType] = useState("log");
   const [evidenceContent, setEvidenceContent] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
   const {
     data: evidence,
     isLoading: isEvidenceLoading,
@@ -29,6 +31,7 @@ const EvidenceSection = ({ incidentId }: EvidenceSectionProps) => {
       return;
     }
     try {
+      setAddError(null);
       await addIncidentEvidence({
         incidentId,
         evidence_type: evidenceType,
@@ -36,7 +39,7 @@ const EvidenceSection = ({ incidentId }: EvidenceSectionProps) => {
       }).unwrap();
       setEvidenceContent("");
     } catch (error) {
-      console.error("Failed to add evidence:", error);
+      setAddError(getApiErrorMessage(error));
     }
   };
 
@@ -86,6 +89,11 @@ const EvidenceSection = ({ incidentId }: EvidenceSectionProps) => {
           </div>
 
           <div className="pt-2">
+            {addError && (
+              <p className="mb-3 text-sm text-red-500">
+                {addError}
+              </p>
+            )}
             <button
               type="button"
               onClick={handleAddEvidence}

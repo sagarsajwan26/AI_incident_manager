@@ -25,6 +25,7 @@ type LoginResponse = {
 
 type MeResponse = {
   id: number;
+  tenant_id: number;
   name: string;
   email: string;
 };
@@ -160,6 +161,7 @@ export type Integration = {
 export type CreateIntegrationRequest = {
   provider: IntegrationProvider;
   credentials: Record<string, unknown>;
+  webhook_secret?: string;
   is_active?: boolean;
 };
 

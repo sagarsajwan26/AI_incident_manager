@@ -3,7 +3,8 @@ import pytest
 @pytest.fixture
 def auth_setup(client):
     """Register and login a test user, returning auth info."""
-    suffix = "auth"  # simple static suffix
+    import random, string
+    suffix = "".join(random.choices(string.ascii_lowercase, k=6))
     email = f"user_{suffix}@example.com".lower()
     password = "Password123!"
     # Register
@@ -20,7 +21,8 @@ def auth_setup(client):
     # Login to set cookie
     res = client.post(
         "/auth/login",
-        json={"email": email, "password": password},
+        json={"tenant_name": f"Tenant{suffix}",
+        "email": email, "password": password},
     )
     assert res.status_code == 200, res.text
     return {"email": email, "password": password}

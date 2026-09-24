@@ -4,6 +4,7 @@ from datetime import datetime
 
 class IntegrationCreate(BaseModel):
     provider: str
+    webhook_secret: str | None = None
     credentials: dict
     is_active: bool = True
 

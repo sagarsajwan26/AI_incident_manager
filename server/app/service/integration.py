@@ -10,7 +10,12 @@ class IntegrationService:
         self.repository = IntegrationRepository(db)
 
     async def create_integration(
-        self, tenant_id: int, provider: str, credentials: dict, is_active: bool = True
+        self,
+        tenant_id: int,
+        provider: str,
+        credentials: dict,
+        webhook_secret: str | None = None,
+        is_active: bool = True,
     ) -> Integration:
         existing = await self.repository.get_by_provider_and_tenant(
             provider=provider, tenant_id=tenant_id
@@ -34,6 +39,7 @@ class IntegrationService:
             tenant_id=tenant_id,
             provider=provider,
             credentials=credentials,
+            webhook_secret=webhook_secret,
             is_active=is_active,
         )
 

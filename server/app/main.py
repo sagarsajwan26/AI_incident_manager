@@ -5,10 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="ai incidence manger")
 
 
+from app.core.config import settings
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
+        origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()
     ],
     allow_credentials=True,
     allow_methods=["*"],

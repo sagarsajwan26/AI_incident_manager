@@ -22,6 +22,7 @@ def auth_tenant_1(client):
     assert res.status_code == 200, res.text
     
     res = client.post("/auth/login", json={
+        "tenant_name": f"TenantOne{suffix}",
         "email": email,
         "password": password
     })
@@ -43,6 +44,7 @@ def auth_tenant_2(client):
     assert res.status_code == 200, res.text
     
     res = client.post("/auth/login", json={
+        "tenant_name": f"TenantTwo{suffix}",
         "email": email,
         "password": password
     })

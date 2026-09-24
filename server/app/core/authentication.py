@@ -11,7 +11,9 @@ async def get_current_user(
 ) -> User:
     user_repository = UserRepository(db)
     if access_token is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="not foun")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+        )
     user_id = verify_access_token(access_token)
     if user_id is None:
         raise HTTPException(

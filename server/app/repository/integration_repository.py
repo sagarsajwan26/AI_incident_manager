@@ -14,12 +14,14 @@ class IntegrationRepository:
         tenant_id,
         provider,
         credentials,
-        is_active,
+        webhook_secret: str | None = None,
+        is_active: bool = True,
     ) -> Integration:
         integration = Integration(
             tenant_id=tenant_id,
             provider=provider,
             credentials=credentials,
+            webhook_secret=webhook_secret,
             is_active=is_active,
         )
 

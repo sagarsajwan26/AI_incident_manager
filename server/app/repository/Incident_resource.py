@@ -44,3 +44,17 @@ class IncidentResourceRepository:
         )
 
         return result.scalar_one_or_none()
+
+    async def get_by_github_repository(
+        self,
+        identifier: str,
+    ) -> list[IncidentResource]:
+        result = await self.db.execute(
+            select(IncidentResource).where(
+                IncidentResource.provider == "github",
+                IncidentResource.resource_type == "repository",
+                IncidentResource.identifier == identifier,
+            )
+        )
+
+        return list(result.scalars().all())

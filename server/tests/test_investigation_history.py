@@ -55,6 +55,7 @@ def auth_setup(client):
     
     # Login to set cookie
     res = client.post("/auth/login", json={
+        "tenant_name": f"HistTenant{suffix}",
         "email": email,
         "password": password
     })

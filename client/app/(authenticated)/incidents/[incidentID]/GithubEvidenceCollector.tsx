@@ -5,6 +5,7 @@ import {
   useCollectGithubEvidenceMutation,
   useCollectGithubDeploymentEvidenceMutation,
 } from "@/app/lib/services/api";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 import { 
   DocumentArrowDownIcon, 
   ServerStackIcon, 
@@ -53,20 +54,6 @@ export default function GithubEvidenceCollector({
     return true;
   };
 
-  const getErrorMessage = (error: any) => {
-    const detail = error?.data?.detail;
-
-    if (typeof detail === "string") {
-      return detail;
-    }
-
-    if (Array.isArray(detail) && detail.length > 0 && detail[0]?.msg) {
-      return detail[0].msg;
-    }
-
-    return "Failed to collect GitHub evidence.";
-  };
-
   const handleCollectCommits = async () => {
     setMessage("");
     setErrorMsg("");
@@ -88,9 +75,8 @@ export default function GithubEvidenceCollector({
           result.length === 1 ? "evidence record" : "evidence records"
         }.`,
       );
-    } catch (error: any) {
-      console.error("Failed to collect GitHub commits:", error);
-      setErrorMsg(getErrorMessage(error));
+    } catch (error) {
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
 
@@ -115,9 +101,8 @@ export default function GithubEvidenceCollector({
           result.length === 1 ? "evidence record" : "evidence records"
         }.`,
       );
-    } catch (error: any) {
-      console.error("Failed to collect GitHub deployments:", error);
-      setErrorMsg(getErrorMessage(error));
+    } catch (error) {
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
 

@@ -1,3 +1,4 @@
+from app.models.incident import Incident
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint

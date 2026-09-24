@@ -11,8 +11,6 @@ class IntegrationTestservice:
             response = await client.get(
                 "https://api.github.com/user", headers=headers, timeout=10.0
             )
-        print("GitHub status:", response.status_code)
-        print("GitHub response:", response.text)
         if response.status_code != 200:
             raise ValueError("Invalid GitHub access token.")
 

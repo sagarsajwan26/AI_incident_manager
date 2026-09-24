@@ -3,6 +3,7 @@ import { Incident, useCreateIncidentMutation } from "@/app/lib/services/api";
 import React, { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { getApiErrorMessage } from "@/app/lib/utils/apiError";
 
 export default function CreateIncidentPage() {
   const [title, setTitle] = useState("");
@@ -12,6 +13,7 @@ export default function CreateIncidentPage() {
   const [resourceType, setResourceType] = useState("");
   const [identifier, setIdentifier] = useState("");
   const [includeResource, setIncludeResource] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const router = useRouter();
   const [createIncident, { isLoading }] = useCreateIncidentMutation();
@@ -19,6 +21,7 @@ export default function CreateIncidentPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
+      setErrorMsg(null);
       const incident = await createIncident({
         title: title.trim(),
         description: description.trim(),
@@ -36,7 +39,7 @@ export default function CreateIncidentPage() {
 
       router.push(`/incidents/${incident.id}`);
     } catch (error) {
-      console.error("Failed to create incident:", error);
+      setErrorMsg(getApiErrorMessage(error));
     }
   };
 
@@ -51,6 +54,12 @@ export default function CreateIncidentPage() {
           Report a production incident for investigation.
         </p>
       </div>
+
+      {errorMsg && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-medium text-red-600">{errorMsg}</p>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}

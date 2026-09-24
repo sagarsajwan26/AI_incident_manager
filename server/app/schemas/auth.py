@@ -60,6 +60,7 @@ class RegisterResponse(BaseModel):
 
 
 class LoginRequest(BaseModel):
+    tenant_name: str
     email: EmailStr
     password: str
 

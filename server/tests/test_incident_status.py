@@ -23,6 +23,7 @@ def auth_setup(client):
     
     # Login to set cookie
     res = client.post("/auth/login", json={
+        "tenant_name": f"Tenant{suffix}",
         "email": email,
         "password": password
     })

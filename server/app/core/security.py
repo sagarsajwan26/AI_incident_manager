@@ -27,7 +27,6 @@ def create_access_token(user_id: str, role: str):
 
 
 def verify_access_token(token: str) -> int:
-    print(token)
     try:
         payload = jwt.decode(token, settings.access_token, algorithms=["HS256"])
 
@@ -40,7 +39,6 @@ def verify_access_token(token: str) -> int:
         return int(user_id)
 
     except InvalidTokenError as e:
-        print("JWT ERROR:", type(e).__name__, str(e))
 
         return None
 
@@ -56,6 +54,17 @@ def create_refresh_token(user_id: str):
     return encoded
 
 
-def verify_refresh_token(token: str):
-    decoded = jwt.decode(token, settings.refresh_token, algorithms=["HS256"])
-    return decoded
+def verify_refresh_token(token: str) -> dict | None:
+    try:
+        payload = jwt.decode(token, settings.refresh_token, algorithms=["HS256"])
+
+        if payload.get("type") != "refresh":
+            return None
+
+        user_id = payload.get("user_id")
+        if user_id is None:
+            return None
+        return payload
+
+    except InvalidTokenError:
+        return None

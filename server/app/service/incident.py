@@ -150,16 +150,16 @@ class IncidentService:
         return await self.incident_repository.get_all(tenant_id=current_user.tenant_id)
 
     async def assign_incident(
-        self, incident_id: int, investigator_id: int, tenant_id: int, current_user: User
+        self, incident_id: int, investigator_id: int, current_user: User
     ) -> Incident:
         incident = await self.incident_repository.get_by_id_and_tenant(
-            incident_id=incident_id, tenant_id=tenant_id
+            incident_id=incident_id, tenant_id=current_user.tenant_id
         )
         if incident is None:
             raise HTTPException(status_code=404, detail="incident not found")
 
         investigator = await self.user_repository.get_by_id_and_tenant(
-            user_id=investigator_id, tenant_id=tenant_id
+            user_id=investigator_id, tenant_id=current_user.tenant_id
         )
         if investigator is None:
             raise HTTPException(
@@ -179,7 +179,7 @@ class IncidentService:
         incident.assigned_to = investigator.id
         await self.incident_repository.save(incident)
         await self.audit_repository.create(
-            tenant_id=tenant_id,
+            tenant_id=current_user.tenant_id,
             incident_id=incident.id,
             performed_by=current_user.id,
             action="ASSIGNED",
@@ -193,11 +193,10 @@ class IncidentService:
         self,
         incident_id: int,
         new_status: IncidentStatus,
-        tenant_id: int,
         current_user: User,
     ) -> Incident:
         incident = await self.incident_repository.get_by_id_and_tenant(
-            incident_id=incident_id, tenant_id=tenant_id
+            incident_id=incident_id, tenant_id=current_user.tenant_id
         )
 
         if incident is None:
@@ -232,7 +231,7 @@ class IncidentService:
 
         await self.incident_repository.save(incident)
         await self.audit_repository.create(
-            tenant_id=tenant_id,
+            tenant_id=current_user.tenant_id,
             incident_id=incident.id,
             performed_by=current_user.id,
             action="STATUS_CHANGED",
@@ -757,10 +756,12 @@ class IncidentService:
 
         client = GithubClient(token)
         provider = GithubProvider(client)
-        deployments = await provider.collect_deployments(
-            owner=owner, repo=repo, per_page=per_page
-        )
-
+        try:
+            deployments = await provider.collect_deployments(
+                owner=owner, repo=repo, per_page=per_page
+            )
+        except GithubIntegrationError as exc:
+            raise IntegrationConnectionError(provider="github", cause=exc) from exc
         created_evidence = []
 
         for deployment in deployments:
@@ -827,19 +828,19 @@ class IncidentService:
         outcome: str | None = None,
     ) -> IncidentAction:
         incident = await self.get_incident(incident_id, current_user)
-        
+
         if phase == IncidentActionPhase.CLOSURE:
             if current_user.role != UserRole.ADMIN:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Only admins can create closure actions"
+                    detail="Only admins can create closure actions",
                 )
             if incident.status != IncidentStatus.RESOLVED:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Closure actions can only be created for resolved incidents"
+                    detail="Closure actions can only be created for resolved incidents",
                 )
-                
+
         action = IncidentAction(
             incident_id=incident.id,
             tenant_id=current_user.tenant_id,
@@ -850,7 +851,7 @@ class IncidentService:
             outcome=outcome,
         )
         action = await self.incident_action_repository.create(action)
-        
+
         await self.audit_repository.create(
             tenant_id=current_user.tenant_id,
             incident_id=incident.id,
@@ -869,6 +870,5 @@ class IncidentService:
     ) -> list[IncidentAction]:
         incident = await self.get_incident(incident_id, current_user)
         return await self.incident_action_repository.get_by_incident(
-            incident_id=incident.id,
-            tenant_id=current_user.tenant_id
+            incident_id=incident.id, tenant_id=current_user.tenant_id
         )

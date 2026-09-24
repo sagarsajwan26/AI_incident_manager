@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import get_current_user
+from app.core.authorization import require_role
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_db
 from app.models.user import User, UserRole
@@ -29,6 +30,7 @@ async def create_integration(
             tenant_id=current_user.tenant_id,
             provider=data.provider,
             credentials=data.credentials,
+            webhook_secret=data.webhook_secret,
             is_active=data.is_active,
         )
     except DuplicateIntegrationError as exc:

@@ -57,6 +57,7 @@ def auth_setup(client):
     
     # Login to set cookie
     res = client.post("/auth/login", json={
+        "tenant_name": f"Tenant{suffix}",
         "email": email,
         "password": password
     })
@@ -124,6 +125,7 @@ def test_wrong_tenant(client, test_incident_id, auth_setup):
     })
     
     client.post("/auth/login", json={
+        "tenant_name": f"WrongTenant{suffix}",
         "email": email,
         "password": password
     })

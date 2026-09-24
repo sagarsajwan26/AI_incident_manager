@@ -41,6 +41,7 @@ class Integration(Base):
         JSONB,
         nullable=False,
     )
+    
 
     is_active: Mapped[bool] = mapped_column(
         default=True,
